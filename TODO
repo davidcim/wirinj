@@ -1,0 +1,9 @@
+- If *args and *kwargs are in the signature of the __init__/__deps__ dependencies, search on the definitions
+  using a wildcard as the last "tree creation"'s path element to find all the parameters available for the class.
+
+- Create a class decorator which arguments are equivalent to a __deps__ method dependency definition
+  and which __init__ is wrapped with an injection wrapper equivalent to @inject decorator:
+
+  @dependencies(dep1, dep2: Class2)
+  class MyClass:
+    pass
