@@ -11,8 +11,7 @@ setuptools.setup(
     version=version,
     author="David Cimadevilla",
     author_email="dev.davidcim@gmail.com",
-    description="Dependency injection library compatible with IDE inspections and minimal boiler plate code."
-                "dessign.",
+    description="A new dependency injection library for Python 3 with an original and clean design.",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/davidcim/wirinj",
