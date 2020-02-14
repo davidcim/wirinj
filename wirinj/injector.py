@@ -1,11 +1,11 @@
 from logging import ERROR, INFO, DEBUG
 from typing import Union, Sequence, List, Callable, Optional, Dict, Tuple
 
+from .locators import LocatorChain, LocatorCache
 from .core import logger, Arg, Dependency, NotSet, Locator, SEPARATOR_OPEN, SEPARATOR_CLOSE, InstanceArgs, \
     filter_explicit_args
 from .errors import MissingDependenciesError
-from .introspection import get_func_args
-from .sys import get_subclassing_factory, get_func_factory
+from .introspect import get_func_args
 
 
 class InjectType(type):
@@ -13,13 +13,14 @@ class InjectType(type):
         return 'Inject'
 
 
-class Inject(metaclass=InjectType):
+class Injected(metaclass=InjectType):
     pass
 
 
 class NotFoundType(type):
     def __str__(self):
         return 'NotFound'
+
 
 class NotFound(metaclass=NotFoundType):
     pass
@@ -29,11 +30,9 @@ class FailedType(type):
     def __str__(self):
         return 'Failed'
 
+
 class Failed(metaclass=FailedType):
     pass
-
-
-INJECT = '__inject__'
 
 
 class CreationNode:
@@ -65,7 +64,6 @@ class CreationNodeReference:
         self.node = node
 
     def __str__(self) -> str:
-
         path = ''
         for entry in self.creation_path:
             path += '    '
@@ -93,9 +91,7 @@ def get_creation_args(node_childs: Sequence[CreationNode]) -> Dict:
     return result
 
 
-
-def log_creation_tree(tree: CreationNode, log_level=INFO, msg = None):
-
+def log_creation_tree(tree: CreationNode, log_level=INFO, msg=None):
     if not logger.isEnabledFor(log_level):
         return
 
@@ -130,12 +126,11 @@ def creation_path_as_text(parent_path: Sequence[Arg], creation_node: CreationNod
     return path
 
 
-
 def has_a_valid_default(arg: Arg):
     if arg.default is NotSet:
         return False
 
-    if arg.cls != NotSet and arg.default in [INJECT, Inject]:
+    if arg.cls != NotSet and arg.default in [Injected]:
         return False
 
     return True
@@ -152,10 +147,18 @@ class DefaultDependency(Dependency):
 
 class Injector:
 
-    def __init__(self, dependencies: Locator, subclassing_factory=True):
-        self.subclassing_factory = subclassing_factory
-        dependencies.initialize(self)
-        self.locator = dependencies
+    def __init__(self, *dependencies: Locator, cached=True):
+
+        assert dependencies, '{0} requires at least one {1}'.format(Injector.__name__, Locator.__name__)
+
+        if len(dependencies) == 1:
+            deps = dependencies[0]
+        else:
+            deps = LocatorChain(*dependencies)
+
+        self.locator = LocatorCache(deps) if cached else deps
+
+        self.locator.initialize(self)
 
     def get(self, cls, *args, **kwargs):
         success, root = self._create_node((), Arg(None, cls), InstanceArgs(args, kwargs))
@@ -170,20 +173,16 @@ class Injector:
         def func_wrapper(*args, **kwargs):
             injected_args = self._get_function_args(func, args, kwargs)
             return func(*args, **{**injected_args, **kwargs})
-        return func_wrapper
 
-    def get_factory(self, cls):
-        if self.subclassing_factory:
-            return get_subclassing_factory(cls, self.get)
-        else:
-            return get_func_factory(cls, self.get)
+        return func_wrapper
 
     def _get_function_args(self, func: Callable, args, kwargs):
         fn_args = get_func_args(func)
         injectable_args = filter_explicit_args(fn_args, args, kwargs)
         return self._create_virtual_node(injectable_args, Arg(func.__name__, func.__class__, NotSet))
 
-    def _create_childs(self, arg_list: Optional[Sequence[Arg]], creation_path: Sequence[Arg]) -> (bool, List[CreationNode]):
+    def _create_childs(self, arg_list: Optional[Sequence[Arg]], creation_path: Sequence[Arg]) -> Tuple[
+            bool, Sequence[CreationNode]]:
         """
         @return: Returns two values. The first value is True if the instantiation of all childs succeded. The second
         is the CreationNode list.
@@ -200,7 +199,8 @@ class Injector:
             childs.append(child)
         return success, childs
 
-    def _create_node(self, parent_path: Sequence[Arg], arg: Arg, instance_args: Optional[InstanceArgs] = None) -> Tuple[bool, CreationNode]:
+    def _create_node(self, parent_path: Sequence[Arg], arg: Arg, instance_args: Optional[InstanceArgs] = None) -> Tuple[
+        bool, CreationNode]:
         """
         @return: Returns two values. The first value is True if the instantiation succeded. The second is the new
         node. When the Locator cannot find a dependency, the field 'dep' will be set as NotFound.
@@ -225,6 +225,10 @@ class Injector:
             if cls is not NotSet and cls != arg.cls:
                 current_path = list(parent_path) + [Arg(arg.name, cls, arg.default)]
 
+            # Remove instance args
+            if instance_args:
+                dep_args = filter_explicit_args(dep_args, instance_args.args, instance_args.kwargs)
+
             # Create childs
             childs_success, childs = self._create_childs(dep_args, current_path)
 
@@ -233,7 +237,7 @@ class Injector:
 
         # With no args
         else:
-            childs =()
+            childs = ()
             params = {}
             childs_success = True
 
@@ -258,7 +262,6 @@ class Injector:
         # Return full node
         return True, creation_node
 
-
     def _create_virtual_node(self, args: Sequence[Arg], root_arg: Arg):
 
         # Create tree of dependencies
@@ -266,4 +269,3 @@ class Injector:
         root = CreationNode(root_arg, None, childs)
         _after_tree_creation(success, root)
         return root.get_params()
-

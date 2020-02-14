@@ -11,7 +11,7 @@ setuptools.setup(
     version=version,
     author="David Cimadevilla",
     author_email="dev.davidcim@gmail.com",
-    description="Dependency injection that works with IDE inspections everywhere and with a unique and very usable"
+    description="Dependency injection library compatible with IDE inspections and minimal boiler plate code."
                 "dessign.",
     long_description=long_description,
     long_description_content_type="text/markdown",

@@ -1,5 +1,5 @@
 from inspect import getfullargspec, FullArgSpec
-from typing import Type, Sequence, Callable, Optional
+from typing import Sequence, Callable, Optional
 
 from .core import Arg, NotSet, InjectionType, DEPS_METHOD, InstanceArgs, NotSetType
 
@@ -8,7 +8,7 @@ def is_builtin_cls(annotation) -> [NotSetType, bool]:
     return NotSet if annotation is NotSet else annotation.__module__ == 'builtins'
 
 
-def get_deps_from_argspec(spec: FullArgSpec) -> Sequence[Arg]:
+def get_deps_from_argspec(spec: FullArgSpec, is_private=False) -> Sequence[Arg]:
     result = []
 
     defaults_idx_base = (0 if spec.defaults is None else len(spec.defaults)) - len(spec.args)
@@ -19,10 +19,9 @@ def get_deps_from_argspec(spec: FullArgSpec) -> Sequence[Arg]:
         default_idx = defaults_idx_base + i
         default = spec.defaults[default_idx] if default_idx >= 0 else NotSet
         annotation = spec.annotations.get(name, NotSet)
-        result.append(Arg(name, annotation, default))
+        result.append(Arg(name, annotation, default, is_private))
         n += 1
     return result
-
 
 
 def get_func_result(func: Callable) -> Sequence[Arg]:
@@ -33,7 +32,6 @@ def get_func_result(func: Callable) -> Sequence[Arg]:
 
 
 def get_func_args(func: Callable) -> Sequence[Arg]:
-
     assert isinstance(func, Callable), \
         '"{}" must be Callable'.format(func.__name__)
 
@@ -41,8 +39,7 @@ def get_func_args(func: Callable) -> Sequence[Arg]:
     return get_deps_from_argspec(spec)
 
 
-def get_method_args(cls, method_name) -> Sequence[Arg]:
-
+def get_method_args(cls, method_name, is_private=False) -> Sequence[Arg]:
     method = getattr(cls, method_name)
 
     assert method, 'Missing method {1} on class {0}'.format(cls.__name__, method_name)
@@ -51,8 +48,7 @@ def get_method_args(cls, method_name) -> Sequence[Arg]:
         '"{0}.{1}" must be Callable'.format(cls.__name__, method_name)
 
     spec = getfullargspec(method)
-    return get_deps_from_argspec(spec)
-
+    return get_deps_from_argspec(spec, is_private)
 
 
 def get_class_injection_type(cls) -> InjectionType:
@@ -64,7 +60,7 @@ def get_class_injection_type(cls) -> InjectionType:
     spec = getfullargspec(init_method)
 
     try:
-        if spec.kwonlyargs and spec.kwonlyargs.index('dependencies') >= 0:
+        if spec.kwonlyargs and spec.kwonlyargs.index('_dependencies') >= 0:
             return InjectionType.deps
     except ValueError:
         pass
@@ -72,24 +68,23 @@ def get_class_injection_type(cls) -> InjectionType:
     return InjectionType.init
 
 
-def get_class_deps(cls):
+def get_class_deps(cls, is_private=False):
     args = []
 
     # Base deps
     for base_cls in cls.__bases__:
         if base_cls.__module__ != 'builtins':
-            args += get_class_deps(base_cls)
+            args += get_class_deps(base_cls, is_private)
 
     # Current deps
     method = getattr(cls, DEPS_METHOD, None)
     if method:
-        args += get_method_args(cls, DEPS_METHOD)
+        args += get_method_args(cls, DEPS_METHOD, is_private)
 
     return args
 
 
 def get_class_dependencies(cls) -> Sequence[Arg]:
-
     injection_type = get_class_injection_type(cls)
 
     if injection_type == InjectionType.none:
@@ -97,13 +92,12 @@ def get_class_dependencies(cls) -> Sequence[Arg]:
     elif injection_type == InjectionType.init:
         return get_method_args(cls, '__init__')
     elif injection_type == InjectionType.deps:
-        return get_class_deps(cls)
+        return get_class_deps(cls, True)
     else:
         raise ValueError()
 
 
 def instantiate_class(cls, instance_args: Optional[InstanceArgs] = None, **deps):
-
     type = get_class_injection_type(cls)
 
     if instance_args:
@@ -118,6 +112,6 @@ def instantiate_class(cls, instance_args: Optional[InstanceArgs] = None, **deps)
     elif type == InjectionType.init:
         return cls(*args, **{**deps, **kwargs})
     elif type == InjectionType.deps:
-        return cls(*args, dependencies=deps, **kwargs)
+        return cls(*args, _dependencies=deps, **kwargs)
     else:
         raise ValueError()

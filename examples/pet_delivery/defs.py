@@ -1,11 +1,10 @@
 from typing import Type
 
+from .classes import Mike, Vehicle, Bob, Car, PetPicker, PetLoader, Pet, Bird, Van, Dog, VehicleBuilder, \
+    Truck, Engine, Plate, Wheel, Container, Cat
 from wirinj import Definitions, Factory, Singleton, Instance
-from wirinj.definition import Autowiring, AutowiringReport
-from tests.example_classes import Mike, Vehicle, Bob, Car, PetPicker, PetLoader, Pet, Bird, Van, Dog, VehicleBuilder, Truck, \
-    Engine, Plate, Wheel, Container, Cat
 
-PetDeps = {
+pet_defs = {
     Dog: Instance(),
     Cat: Instance(),
     Bird: Instance(),
@@ -21,7 +20,7 @@ PetDeps = {
 }
 
 
-VehicleDeps = {
+vehicle_defs = {
     Engine: Instance(),
     Plate: Instance(),
     Wheel: Instance(),
@@ -65,7 +64,7 @@ VehicleDeps = {
     },
 }
 
-CommonDeps = {
+common_defs = {
     PetPicker: Singleton(),
     PetLoader: Singleton(),
 
@@ -73,7 +72,7 @@ CommonDeps = {
     Mike: Singleton(),
 }
 
-WorldOneDeps = {
+world_one_defs = {
     (Bob, Vehicle): Singleton(Car),
     (Bob, PetPicker, Type[Pet]): Factory(Bird),
 
@@ -81,7 +80,7 @@ WorldOneDeps = {
     (Mike, PetPicker, Type[Pet]): Factory(Cat),
 }
 
-WorldTwoDeps = {
+world_two_defs = {
     (Bob, Vehicle): Singleton(Van),
     (Bob, PetPicker, Type[Pet]): Factory(Cat),
 
@@ -89,19 +88,16 @@ WorldTwoDeps = {
     (Mike, PetPicker, Type[Pet]): Factory(Dog),
 }
 
-autowiring_report = AutowiringReport()
-
-world_one_deps = Definitions(
-    PetDeps,
-    VehicleDeps,
-    CommonDeps,
-    WorldOneDeps,
-    Autowiring(autowiring_report),
+world_one = Definitions(
+    pet_defs,
+    vehicle_defs,
+    common_defs,
+    world_one_defs,
 )
 
-world_two_deps = Definitions(
-    PetDeps,
-    VehicleDeps,
-    CommonDeps,
-    WorldTwoDeps,
+world_two = Definitions(
+    pet_defs,
+    vehicle_defs,
+    common_defs,
+    world_two_defs,
 )

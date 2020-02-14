@@ -4,15 +4,15 @@ from .core import Locator, Arg, Dependency
 
 
 class LocatorChain(Locator):
-    def __init__(self, locator_list: Sequence[Locator]):
-        self.finder_list = locator_list
+    def __init__(self, *locator_list: Locator):
+        self.locator_list = locator_list
 
     def initialize(self, injector):
-        for finder in self.finder_list:
+        for finder in self.locator_list:
             finder.initialize(injector)
 
     def get(self, creation_path: Sequence[Arg]):
-        for finder in self.finder_list:
+        for finder in self.locator_list:
             result = finder.get(creation_path)
             if result is not None:
                 return result
@@ -38,4 +38,3 @@ class LocatorCache(Locator):
             result = self.real_locator.get(creation_path)
             self.cache[key] = result
             return result
-

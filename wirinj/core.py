@@ -4,18 +4,17 @@ from logging import getLogger
 from typing import Optional, Union, Any, Sequence
 
 import wirinj
-from .sys import get_cls_name
+from .tools import get_cls_name
 
 logger = getLogger(wirinj.__name__)
 
-
-SEPARATOR_OPEN  = '--------------- wirinj ---------------'
+SEPARATOR_OPEN = '--------------- ' + wirinj.__name__ + ' ---------------'
 SEPARATOR_CLOSE = '--------------------------------------'
 
 DEPS_METHOD = '__deps__'
 
-
 USE_SUBCLASSING_FACTORY = True
+
 
 class NotSetType(type):
     def __str__(self):
@@ -39,10 +38,20 @@ class InstanceArgs:
 
 
 class Arg:
-    def __init__(self, name: Optional[str], cls: Union[NotSetType, Any] = NotSet, default: Union[NotSetType, Any] = NotSet):
+    def __init__(self, name: Optional[str], cls: Union[NotSetType, Any] = NotSet,
+                 default: Union[NotSetType, Any] = NotSet, is_private: bool = False):
+        """
+        Arg is the representation of a function argument in the context of dependency injection.
+        @param name: Name of the argument.
+        @param cls: Type annotation of the argument.
+        @param default: Default value for the argument.
+        @param is_private: Private arguments are injected before running the __init__ method and cannot be overridden
+        with other arguments passed to the injector.
+        """
         self.name = name
         self.cls = cls
         self.default = default
+        self.is_private = is_private
 
     def __str__(self) -> str:
         return "{}{}{}".format(
@@ -83,12 +92,17 @@ class Locator(metaclass=ABCMeta):
 
 def filter_explicit_args(arg_list: Sequence[Arg], args, kwargs):
     result = []
-    for i, arg in enumerate(arg_list):
-        if i < len(args):
-            continue
+    i = -1
+    for arg in arg_list:
 
-        if arg.name in kwargs and arg.default != kwargs[arg.name]:
-            continue
+        if not arg.is_private:
+            i += 1
+
+            if i < len(args):
+                continue
+
+            if arg.name in kwargs and arg.default != kwargs[arg.name]:
+                continue
 
         result.append(arg)
 

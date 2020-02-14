@@ -1,18 +1,17 @@
-from abc import abstractmethod, ABCMeta
 from logging import getLogger
 from typing import Type, Dict, List
 
-from wirinj.decorators import inject
+from wirinj import deps
 
 logger = getLogger(__name__)
 
 
-class Pet(metaclass=ABCMeta):
+class Pet:
     def __deps__(self, sound: str, weight):
         self.sound = sound
         self.weight = weight
 
-    @inject
+    @deps
     def __init__(self, gift_wrapped):
         self.gift_wrapped = gift_wrapped
 
@@ -32,11 +31,11 @@ class Bird(Pet):
     pass
 
 
-class Part(metaclass=ABCMeta):
+class Part:
     def __deps__(self, mount_sound):
         self.mount_sound = mount_sound
 
-    @inject
+    @deps
     def __init__(self):
         pass
 
@@ -73,7 +72,7 @@ class VehicleBuilder:
         self.wheel_factory = wheel_factory
         self.container_factory = container_factory
 
-    @inject
+    @deps
     def __init__(self):
         pass
 
@@ -91,13 +90,13 @@ class VehicleBuilder:
         return mounting
 
 
-class Vehicle(metaclass=ABCMeta):
+class Vehicle:
     def __deps__(self, builder: VehicleBuilder, recipe: Dict, max_load_weight):
         self.builder = builder
         self.recipe = recipe
         self.max_load_weight = max_load_weight
 
-    @inject
+    @deps
     def __init__(self):
         self.pets = []
         self.build()
@@ -154,9 +153,9 @@ class PetPicker:
     def __deps__(self, pet_store: Type[Pet]):
         self.pet_store = pet_store
 
-    @inject
+    @deps
     def __init__(self):
-        #raise Exception('HORROR!!!!')
+        # raise Exception('HORROR!!!!')
         pass
 
     def pick(self, qty, gift_wrapped):
@@ -170,13 +169,12 @@ class PetPicker:
         return pets
 
 
-class PetDeliveryPerson(metaclass=ABCMeta):
+class PetDeliveryPerson:
 
-    @inject
+    @deps
     def __init__(self):
         pass
 
-    @abstractmethod
     def deliver(self, pet_qty, miles, gift_wrapped):
         pass
 
@@ -190,7 +188,6 @@ class Bob(PetDeliveryPerson):
         self.pet_loader = pet_loader
 
     def deliver(self, pet_qty, miles, gift_wrapped):
-
         # Pick up pets
         pets = self.pet_picker.pick(pet_qty, gift_wrapped)
 
@@ -210,12 +207,12 @@ class Mike(PetDeliveryPerson):
         self.pet_picker = pet_picker
         self.pet_loader = pet_loader
 
-    @inject
+    @deps
     def __init__(self):
         super().__init__()
         self.vehicles = []  # type: List[Vehicle]
 
-    def get_vehicles(self):
+    def get_vehicle(self):
         if self.vehicles:
             return self.vehicles.pop()
         else:
@@ -232,7 +229,7 @@ class Mike(PetDeliveryPerson):
         # Get vehicles and upload them
         vehicles = []
         while pets:
-            vehicle = self.get_vehicles()
+            vehicle = self.get_vehicle()
             vehicles.append(vehicle)
             self.pet_loader.upload(pets, vehicle)
 

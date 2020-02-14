@@ -1,6 +1,6 @@
-class Error(Exception):
+class WirinjError(Exception):
     pass
 
-class MissingDependenciesError(Error):
-    pass
 
+class MissingDependenciesError(WirinjError):
+    pass

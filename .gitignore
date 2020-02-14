@@ -2,5 +2,5 @@
 /build
 /dist
 /wirinj.egg-info
-/wirinj/__pycache__
+__pycache__
 /python

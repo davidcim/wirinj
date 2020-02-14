@@ -23,7 +23,6 @@ def get_func_factory(cls, func):
     return factory
 
 
-
 def is_typing_type(cls):
     return cls.__class__ is Type.__class__ and cls.__name__ == 'Type'
 

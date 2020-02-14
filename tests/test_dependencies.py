@@ -1,13 +1,12 @@
 from unittest import TestCase
 
-from wirinj import Definitions, Injector
-from wirinj.decorators import func_inject
-from wirinj.definition import CustomSingleton, Singleton, CustomInstance
-
+from wirinj.injector import Injector, Injected
+from wirinj.definition import Definitions, CustomSingleton, Singleton, CustomInstance
+from wirinj.decorators import inject
 
 class TestCustomSingletonDependency(TestCase):
 
-    def test_injection(self):
+    def test_full_injection(self):
         class Foo:
             def __init__(self, bar):
                 self.bar = bar
@@ -20,7 +19,7 @@ class TestCustomSingletonDependency(TestCase):
             Foo: CustomSingleton(foo_creator),
         })
 
-        @func_inject(deps)
+        @inject(deps)
         def do(foo: Foo):
             self.assertIsNotNone(foo)
             self.assertIsNotNone(foo.bar)
@@ -28,24 +27,22 @@ class TestCustomSingletonDependency(TestCase):
         do()
 
 class TestCustomInstanceDependency(TestCase):
-    def test_get_with_params(self):
+
+    def test_custom_instance_with_params(self):
         class Baz:
             pass
 
         class Foo:
-            def __init__(self, bar, baz):
+            def __init__(self, bar, baz=Injected):
                 self.bar = bar
                 self.baz = baz
 
-        def foo_creator(baz: Baz):
-            def creator(bar):
-                return Foo(bar, baz)
-
-            return creator
+        def foo_creator(bar, baz: Baz):
+            return Foo(bar, baz)
 
         injector = Injector(Definitions({
             Baz: Singleton(),
-            Foo: CustomInstance(foo_creator, True),
+            Foo: CustomInstance(foo_creator),
         }))
 
         foo = injector.get(Foo, 'Ping')

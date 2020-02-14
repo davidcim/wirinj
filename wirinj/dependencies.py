@@ -1,10 +1,10 @@
 from typing import Union, Any, Optional, Sequence, Type, Callable
 
-from . import Injector
-from .core import Dependency, NotSet, Arg, InjectionType, InstanceArgs, USE_SUBCLASSING_FACTORY
-from .introspection import get_method_args, get_class_injection_type, get_class_dependencies, instantiate_class, \
+from .core import Dependency, NotSet, Arg, InstanceArgs, USE_SUBCLASSING_FACTORY
+from .injector import Injector
+from .introspect import get_class_dependencies, instantiate_class, \
     get_func_args, get_func_result
-from .sys import get_subclassing_factory, get_func_factory
+from .tools import get_subclassing_factory, get_func_factory
 
 
 class ValueDependency(Dependency):
@@ -76,9 +76,8 @@ class FactoryDependency(Dependency):
 
 class CustomInstanceDependency(Dependency):
 
-    def __init__(self, func: Callable, wrapper_func: bool = False, cls=None):
+    def __init__(self, func: Callable, cls=None):
         self.func = func
-        self.wrapper_func = wrapper_func
         self.cls = cls
 
     def get_class(self) -> Union[Any, NotSet]:
@@ -92,13 +91,8 @@ class CustomInstanceDependency(Dependency):
         return args
 
     def get_instance(self, instance_args: InstanceArgs = None, **deps):
-        instance_creation = self.func(**deps)
 
-        if not self.wrapper_func:
-            return instance_creation
+        if instance_args:
+            return self.func(*instance_args.args, **{**deps, **instance_args.kwargs})
         else:
-            assert isinstance(instance_creation, Callable)
-            if instance_args:
-                return instance_creation(*instance_args.args, **instance_args.kwargs)
-            else:
-                return instance_creation()
+            return self.func(**deps)
