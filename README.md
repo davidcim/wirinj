@@ -183,10 +183,10 @@ dog:  <__main__.Dog object at 0x7f675ce5dac8>
 cat3:  <__main__.Cat object at 0x7f675ce72400>
 ```
 
-We get all the needed dependencies through the `fn` function arguments.
+`@inject` inspects the arguments of the `fn` function signature and inject the required dependencies.
+You get all the needed dependencies through the function arguments.
 You type less and it is clearer and IDE friendly.
 
-The injection process inspects the arguments of the function signature.
 As `cat1` and `cat2` arguments matches `Cat: Instance()` configuration, two new `Cat` instances are injected.
 
 Simillary, `dog` matches `Dog: Singleton()`.
