@@ -108,6 +108,7 @@ print(cat2)
 ```
 <__main__.Cat object at 0x7fab3c1fa438>
 ```
+\
 `Cat` returns a new instance each time because it is defined as `Instance()`:
 ```python
 print(cat1 is cat2)
