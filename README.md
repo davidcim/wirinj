@@ -192,7 +192,7 @@ As `cat1` and `cat2` arguments matches `Cat: Instance()` configuration, two new 
 Simillary, `dog` matches `Dog: Singleton()`.
 Therefore, any `Dog` argument will be injected with the same single `Dog`. 
 
-In contrast, for `sound` and `cat_factory` arguments, the configuration entry is matched by __name__ and not by __class__.
+In contrast, for `sound` and `cat_factory`, the configuration entry is matched by __name__ and not by __class__.
 This is because, in the wiring configuration `dict`, the __key__ of `'sound': 'Meow'` and `'cat_factory': Factory(Cat)` are of type `string`:
 
 - When the _key_ is a __class__, the injector will look at the __type__ annotation of the argument.
@@ -507,7 +507,7 @@ A 14 pounds blue cat.
 In the previous example, the object is instantiated without arguments,
 so all of `__init__`'s arguments are injected from dependencies.
 
-If your class requires some arguments to be passed during instantiation (__explicit arguments__) in addition to the automatically injected dependencies (__injection arguments__),
+If your class requires some arguments to be passed to be created (__explicit arguments__) in addition to the automatically injected dependencies (__injection arguments__),
 I recommend to follow these rules:
 
 0. In the `__init__` method, place the _explicit arguments_ in the first place and then, the _injection arguments_.
@@ -566,7 +566,8 @@ About the 3 arguments of `Cat`.`__init__`:
 
 ### Setting default to `Injected`
 Instead of setting the default value of the _injection arguments_ to `None`, you can use the special value `Injected`:
-- __Pros__: if one argument is missing, a specific `MissingDependenciesError` will be raised instead of continuing the execution using `None` and fail later in an unpredictable way.
+- __Pros__: if one argument is missing, a specific `MissingDependenciesError` is raised.
+Otherwise, the execution would continue with `None` default and fail later in an unpredictable way.
 - __Cons__: you add a dependency to `wirinj`.
 
 ```python
