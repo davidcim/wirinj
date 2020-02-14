@@ -1,6 +1,6 @@
 Wirinj
 ======
-A new dependency injection library with an original and clear design.
+A new dependency injection library for Python 3 with an original and clean design.
 
 Why another dependency injection library?
 -----------------------------------------
