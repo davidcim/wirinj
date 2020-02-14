@@ -5,7 +5,7 @@ A new dependency injection library with an original and clear design.
 Why another dependency injection library?
 -----------------------------------------
 
-Working on a large project I tried to use [python-dependency-injector](https://github.com/ets-labs/python-dependency-injector) first.
+Working on a large project I tried out [python-dependency-injector](https://github.com/ets-labs/python-dependency-injector) first.
 Then, I decided to switch to [pinject](https://github.com/google/pinject).
 As none of them had the features I wanted, I finally decided to write my own library to meet my needs:
 
@@ -81,6 +81,7 @@ defs = {
 # Create injector
 inj = Injector(Definitions(defs))
 ```
+\
 Get a `'sound'`:
 ```python
 sound = inj.get('sound')
@@ -89,6 +90,7 @@ print(sound)
 ```
 Meow
 ```
+\
 Get a `Cat`:
 ```python
 cat1 = inj.get(Cat)
@@ -97,6 +99,7 @@ print(cat1)
 ```
 <__main__.Cat object at 0x7fab3ddc2208>
 ```
+\
 Get another `Cat`:
 ```python
 cat2 = inj.get(Cat)
@@ -112,6 +115,7 @@ print(cat1 is cat2)
 ```
 False
 ```
+\
 Get the `Dog`:
 ```python
 dog = inj.get(Dog)
@@ -120,6 +124,7 @@ print(dog)
 ```
 <__main__.Dog object at 0x7fab3c1fa748>
 ```
+\
 Get it again:
 ```python
 dog2 = inj.get(Dog)
@@ -128,6 +133,7 @@ print(dog2)
 ```
 <__main__.Dog object at 0x7fab3c1fa748>
 ```
+\
 `Dog` always returns the same object because it is defined as `Singleton()`:
 ```python
 print(dog is dog2)
@@ -135,6 +141,7 @@ print(dog is dog2)
 ```
 True
 ```
+\
 Get a `cat factory` and use it to create a new `Cat`:
 ```python
 cat_factory = inj.get('cat_factory')
@@ -146,7 +153,7 @@ print(cat3)
 <__main__.Cat object at 0x7fc6a98119b0>
 ```
 
-Better use the @inject decorator
+Using the @inject decorator
 -----------------------------
 
 If you are using an [IDE](https://en.wikipedia.org/wiki/Integrated_development_environment) such as [PyCharm](https://www.jetbrains.com/pycharm/), you will notice that [code completion](https://www.jetbrains.com/help/pycharm/auto-completing-code.html#) do not work with the previous example.
@@ -214,7 +221,7 @@ Factories
 You can object that, in the previos example, the [code completion](https://www.jetbrains.com/help/pycharm/auto-completing-code.html#) will not work with `cat_factory`.
 That's true; fortunately, this can be easily fixed:
 
-##### IDE friendly factories
+#### IDE friendly factories
 
 Just add a type annotation of type `Type[Cat]` to the factory argument:
 
@@ -241,6 +248,7 @@ Now, it is recognized by the IDE:
 
 ![](img/code_inspect.png)
 
+\
 `Type[Cat]`, as explained in the [typing](https://docs.python.org/3/library/typing.html#typing.Type) module docs, represents the class `Cat` or a subclass of it:
 
 ```python
@@ -265,7 +273,7 @@ Cat:  <__main__.Cat object at 0x7fc458bc7588>
 BlackCat:  <__main__.BlackCat object at 0x7fc458bc7588>
 ```
 
-##### Defining the factory by type
+### Defining the factory by type
 
 To not be limited to a particular name, such as `cat_factory`, we can define the factory dependency by type.
 
@@ -291,7 +299,7 @@ Dependency definitions
 Most of the previous examples have made use of a `Definitions` object with a `dict` as an argument.
 Now I'm going to explain it in detail.
 
-##### Definition format
+### Definition format
 
 One or several `dict` define your wiring configuration. 
 Each _key_ represents the argument to be injected.
@@ -306,7 +314,7 @@ defs = {
 inj = Injector(Definitions(defs))
 ```
 
-##### dict keys
+### dict keys
 
 - If the _key_ is a `class` it will match the argument's __type__ annotation.
 E.g.: the first key in the example above causes any argument of type `Cat`, no matter its name, to be injected with a new _instance_ of `Cat`.
@@ -315,7 +323,7 @@ E.g.: the first key in the example above causes any argument of type `Cat`, no m
 E.g.: the second key causes any argument whose name is `'dog'` to be injected with a unique `Dog` instance.
 Here, as the class can't be inferred from the key, you need to explicitly provide the class as an argument: `'dog': Singleton(Dog)`.  
 
-##### dict values
+### dict values
 
 Each _value_ in the `dict` can be:
 
@@ -352,7 +360,7 @@ def fn(house: House, cat_factory: Type[Cat], dog_factory: Type[Dog]):
 fn()
 ```
 
-##### Providing a class
+### Providing a class
 
 `Instance`, `Singleton` and `Factory` accept an optional class argument to specify the class of the object to be created.
 You pass the class in two use cases:
@@ -389,7 +397,7 @@ cat is a Cat
 pet is a Dog
 ```
 
-##### Creation path
+### Creation path
 
 ```python
 class Nail:
@@ -465,7 +473,7 @@ For each `tuple` entry, a `string` refers to the argument __name__ and a `class`
 
 If two entries match the required dependency, the more specific one will be chosen.
 
-##### Custom dependencies
+### Custom dependencies
 
 `Instance` and `Singleton` are used for simple class instantiation.
 When a custom process is required to create or locate the dependency, use `CustomInstance` or `CustomSingleton`.
@@ -510,7 +518,7 @@ A 14 pounds blue cat.
 ```
 
 
-##### Custom dependencies with arguments
+### Custom dependencies with arguments
 
 In the previous example, the object is instantiated without arguments,
 so all of `__init__`'s arguments are injected from dependencies.
@@ -572,12 +580,12 @@ About the 3 arguments of `Cat`.`__init__`:
 - Another one from the dependency configuration.
 - The third is generated by the custom creation function.
 
-##### Setting argument default to `Injected`
+### Setting argument default to `Injected`
 Instead of setting the default value of the _injection arguments_ to `None`, you can use the special value `Injected`:
 - __Pros__: if one argument is missing, a specific `MissingDependenciesError` will be raised instead of continuing the execution using `None` and fail later in an unpredictable way.
 - __Cons__: you add a dependency to `wirinj`.
 
-##### Splitting definitions
+### Splitting definitions
 
 You can split the dependency configuration in several `dict` definitions.
 
@@ -654,21 +662,21 @@ Horse
 - A `Type[Horse]` factory.
 - A `Horse` instance.
 
-##### Heuristic rules
+### Heuristic rules
 
 `Autowiring` works only for arguments that have a _type annotation_:
 - If the type of the annotation is a `class`, as with `dog: Dog` in the previous example, a _singleton_ will be generated.
 - If the type is a `Type[class]`, as with `horse_factory: Type[Horse]`, a _factory_ will be provided.
 - If the injection occurs in a factory, as when `horse_factory()` is called, an _instance_ will be created.
 
-##### Autowiring for production
+### Autowiring for production
 
 In my opinion, this kind of _magic_ should not be used in production environments;
 you should not take the risk to leave such important wiring decisions in the hands of a heuristic algorithm.
 
 Fortunately, you can use `AutowiringReport` class to easily convert the autowiring configuration into a regular dependency definition:
 
-##### Autowiring report
+### Autowiring report
 
 It's quite simple to use; just pass an `AutowiringReport` instance to `Autowiring`:
 
@@ -703,7 +711,7 @@ Definitions({
 Call `report.get()` to get the report.
 Review and copy the definitions to your configuration file, remove `Autowiring`, and you will be production ready.
   
-##### _No singletons_ option
+### _No singletons_ option
 
 You may set `use_singletons` to `False` to force all dependencies to be injected as an `Instance`.
 
@@ -720,7 +728,7 @@ During each injection process, a _dependency tree_ is built with all the depende
 As you change your code, your dependency configuration can get out of sync.
 `wirinj` include reporting features that can help you to solve this dependency issues:
 
-##### Debugging the injection
+### Debugging the injection
 
 The injection process can be debugged to expose the creation order and the _dependency tree_.
 
@@ -816,7 +824,7 @@ The code above returns this:
 You can see how all the dependencies are gathered, and in which order.
 The final object is the requested `Cat` object.
 
-##### Missing dependencies
+### Missing dependencies
 
 Injection doesn't stop when a dependency is missing.
 It continues building the _dependency tree_ as far as it can.
@@ -868,7 +876,7 @@ Notice that, although the first dependency, `Mouth`, failed to be satisfied, the
 
 With this report, it becomes clear which classes are undefined, and what needs to be added in the injection configuration.
 
-##### Instance error
+### Instance error
 
 If an exception is raised during the instantiation of any of the dependencies,
 you will not get the `dependency tree` logs as it happens when a dependency is missing.
@@ -892,7 +900,7 @@ I call _private injection_ to a special form of injection that separates the `__
 
 Let's compare the two modes:
 
-##### Regular injection
+### Regular injection
 
 Some of the `__init__` arguments come from the factory call;
 the remaining ones are injected automatically.
@@ -912,7 +920,7 @@ def fn(factory: Type[Cat]):
 
 While `color` and `weight` are passed to the factory, the `feeder`argument is injected.
 
-##### Private injection
+### Private injection
 
 This is the equivalent _private_ form for the previous code:
 
@@ -943,7 +951,7 @@ Notice that `__deps__` is a mock method, it is not ever called.
 Its sole purpose is to define the dependencies through its argument signature.
 
 
-##### Why using private injection
+### Why using private injection
 
 You split the initialization arguments in two parts:
 - `__init__` takes only the public API arguments.
@@ -963,7 +971,7 @@ __cons__:
 - Your class will be dependent on the `@deps` decorator. 
 
 
-##### `@deps` decorator
+### `@deps` decorator
 
 In the previous sections, I have explained how this decorator is used.
 What I'm going to explain here is related only to the internal functioning of the feature.
@@ -976,7 +984,7 @@ Notice that you can use this mechanism, even if you are not using other `wirinj`
 By the time `__init__` is called, your object dependencies will already be initialized.
 
 
-##### Enabling code completion with `__deps__`
+### Enabling code completion with `__deps__`
 
 Of course, the IDE (e.g. `PyCharm`) will not detect the dependencies defined by `__deps__`:
  
@@ -999,7 +1007,7 @@ It will never be executed, but now, the IDE will recognize the dependencies as m
 ![](img/code_inspect_deps.png)
 
 
-##### A full injection example
+### A full injection example
 
 This silly example aims to illustrate several aspects of the `wirinj` library.
 
