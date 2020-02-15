@@ -10,19 +10,18 @@ Then, I decided to switch to [pinject](https://github.com/google/pinject).
 As none of them had the features I wanted, I finally decided to write my own library to meet my needs:
 
 - Minimal boiler plate code.
-- Easy refactorings.
+- Avoiding dependencies to the injection library itself.
 - Friendly with [IDE](https://en.wikipedia.org/wiki/Integrated_development_environment)'s [code completion](https://www.jetbrains.com/help/pycharm/auto-completing-code.html#) (e.g. with [PyCharm](https://www.jetbrains.com/pycharm/)).
-- Using [type annotations](https://docs.python.org/3/library/typing.html).
+- Using [reflection](https://en.wikipedia.org/wiki/Reflection_(computer_programming)#Python) to detect dependencies automatically.
 - Easy to define and use of factories.
 - Autowiring option.
 - Easy to fix dependency problems.
 - Detailed injection reports.
 - Powerful but simple wiring configuration.
-- Avoiding name conventions.
-- Avoiding dependencies to the injection library itself.
+- Avoiding naming conventions.
+- Detection of [type annotations](https://docs.python.org/3/library/typing.html).
 - [Private injection](#private-injection).
-- Open and extendable architecture. 
-
+- Open and extendable architecture.
 
 Installation
 ------------
