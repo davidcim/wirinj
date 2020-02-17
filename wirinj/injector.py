@@ -115,7 +115,7 @@ def _after_tree_creation(success: bool, tree: CreationNode):
 
 def creation_path_as_text(parent_path: Sequence[Arg], creation_node: CreationNode, suffix=''):
     path = ''
-    for entry in parent_path[0:-1]:
+    for entry in parent_path:
         path += str(entry) + ' -> '
 
     path += str(creation_node.arg)
@@ -146,8 +146,17 @@ class DefaultDependency(Dependency):
 
 
 class Injector:
+    """
+    Dependency injection service.
+    """
 
     def __init__(self, *dependencies: Locator, cached=True):
+        """
+        @param dependencies: one or more Locator objects such as Dependencies or Autowiring which will be queried
+        by the injector object to locate dependencies. If two Locators contain the same dependency, the first takes
+        precedence.
+        @param cached: if True, cached copies of already located dependecy managers (Dependency) are kept to save time.
+        """
 
         assert dependencies, '{0} requires at least one {1}'.format(Injector.__name__, Locator.__name__)
 
@@ -182,7 +191,7 @@ class Injector:
         return self._create_virtual_node(injectable_args, Arg(func.__name__, func.__class__, NotSet))
 
     def _create_childs(self, arg_list: Optional[Sequence[Arg]], creation_path: Sequence[Arg]) -> Tuple[
-            bool, Sequence[CreationNode]]:
+        bool, Sequence[CreationNode]]:
         """
         @return: Returns two values. The first value is True if the instantiation of all childs succeded. The second
         is the CreationNode list.

@@ -5,6 +5,15 @@ from .injector import Injector
 
 
 def deps(init_method):
+    """
+     - The `@deps` decorator on `__init__` enables _private injection_.
+     - The special method `__deps__` define which dependencies are required.
+     - All the dependencies are located and injected before the object is initialized.
+     - Finally, the real `__init__` method is called.
+
+    Notice that `__deps__` is a mock method, it is not ever called.
+    Its sole purpose is to define the dependencies through its argument signature.
+    """
     assert init_method.__name__ == '__init__', \
         '"{}" decorator must precede __init__ method.'.format(deps.__name__)
 
@@ -24,6 +33,17 @@ def deps(init_method):
 def inject(*dependencies: Locator,
            injector: Injector = None
            ):
+    """
+    @inject inspects the arguments of the wrapped function signature and inject the required dependencies.
+    You get all the needed dependencies through the function arguments.
+
+    It takes as arguments one or more Locator objects such as Dependencies or Autowiring. They will used to create an
+    Injector object which will be used to perform the injection process.
+
+    Alternative, you can pass directly an Injector object through the named argument "injector". In this case,
+    do not pass Locator objects.
+
+    """
     if injector:
         assert not dependencies, \
             '"{}" decorator requires one argument only, two provided.'.format(inject.__name__)
