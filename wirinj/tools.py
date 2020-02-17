@@ -26,6 +26,9 @@ def get_func_factory(cls, func):
 def is_typing_type(cls):
     return cls.__class__ is Type.__class__ and cls.__name__ == 'Type'
 
+def is_typing_clause(cls):
+    return cls.__module__ == 'typing'
+
 
 def get_typing_args(cls):
     return cls.__args__[0] if cls.__args__ else None

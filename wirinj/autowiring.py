@@ -5,7 +5,8 @@ from typing import Optional, Sequence
 from wirinj import Definitions, Locator, Arg, Dependency
 from wirinj.core import SEPARATOR_OPEN, SEPARATOR_CLOSE, NotSet
 from wirinj.dependencies import SingletonWrapper, FactoryDependency, InstanceDependency
-from wirinj.tools import is_typing_type, get_typing_args
+from wirinj.introspect import is_builtin_cls
+from wirinj.tools import is_typing_type, get_typing_args, is_typing_clause
 
 
 class AutowiringReportBase(metaclass=ABCMeta):
@@ -52,6 +53,10 @@ class AutowiringReport(AutowiringReportBase):
         )
 
 
+def is_autowireable_cls(cls):
+    return not isabstract(cls) and not is_builtin_cls(cls) and not is_typing_clause(cls)
+
+
 class Autowiring(Locator):
 
     def __init__(self, report: Optional[AutowiringReport] = None, use_singletons=True):
@@ -76,13 +81,15 @@ class Autowiring(Locator):
         # Something annotated with Type[] is a factory
         if is_typing_type(arg.cls):
             type_cls = get_typing_args(arg.cls)
+            if not is_autowireable_cls(type_cls):
+                return None
             self.report.add('Type[{}]: Factory()'.format(type_cls.__name__))
             factory_dep = SingletonWrapper(FactoryDependency(type_cls, self.injector))
             self.singletons[arg.cls] = factory_dep
             return factory_dep
 
-        # If a non abstract class
-        elif not isabstract(arg.cls):
+        # If is a valid class to be autowired
+        elif is_autowireable_cls(arg.cls):
 
             # With a name, this comes probably from a function arg and therefore it is presumably a singleton
             if arg.name and self.use_singletons:
