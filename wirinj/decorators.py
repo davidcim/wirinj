@@ -1,5 +1,6 @@
 from functools import wraps
 
+from .core import QUERY_WRAPPED_METHOD
 from .locators import Locator
 from .injector import Injector
 
@@ -19,6 +20,10 @@ def deps(init_method):
 
     @wraps(init_method)
     def init_wrapper(self, *args, _dependencies=None, **kwargs):
+        # Query wrapped init
+        if self == QUERY_WRAPPED_METHOD:
+            return init_method
+
         # Inject
         if _dependencies:
             for name, value in _dependencies.items():

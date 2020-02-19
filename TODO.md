@@ -7,8 +7,6 @@
 
 - Allow `Definitions` dicts to have multiple creation paths pointing to a single dependency through `list`s.
 
-- __Mixed private/public injection__. Allow injection in `__init__` parameters when it is wrapped with `@deps` decorator.
-
 - __*Call* definition__. Add `Call`, a new `DependencyBuilder` definition to call a function using its signature as dependency requirements. 
 
 - __Missing parentheses exception__. Explicit exception when you forget the parentheses after `Singleton`, `Instance`, etc. in the definition `dict`.

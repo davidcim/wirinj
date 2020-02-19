@@ -1,7 +1,8 @@
 from inspect import getfullargspec, FullArgSpec
 from typing import Sequence, Callable, Optional
 
-from .core import Arg, NotSet, InjectionType, DEPS_METHOD, InstanceArgs, NotSetType
+from .core import Arg, NotSet, InjectionType, DEPS_METHOD, InstanceArgs, NotSetType, DEPENDENCIES_ARG, \
+    QUERY_WRAPPED_METHOD
 
 
 def is_builtin_cls(annotation) -> [NotSetType, bool]:
@@ -51,55 +52,77 @@ def get_method_args(cls, method_name, is_private=False) -> Sequence[Arg]:
     return get_deps_from_argspec(spec, is_private)
 
 
-def get_class_injection_type(cls) -> InjectionType:
+def has_private_injection(cls) -> bool:
     init_method = getattr(cls, '__init__')
 
     if not init_method:
-        return InjectionType.none
+        return False
 
     spec = getfullargspec(init_method)
 
     try:
-        if spec.kwonlyargs and spec.kwonlyargs.index('_dependencies') >= 0:
-            return InjectionType.deps
+        if spec.kwonlyargs and spec.kwonlyargs.index(DEPENDENCIES_ARG) >= 0:
+            return True
     except ValueError:
         pass
 
-    return InjectionType.init
+    return False
 
 
-def get_class_deps(cls, is_private=False):
+def get_private_deps(cls) -> Sequence[Arg]:
     args = []
 
     # Base deps
     for base_cls in cls.__bases__:
         if base_cls.__module__ != 'builtins':
-            args += get_class_deps(base_cls, is_private)
+            args += get_private_deps(base_cls)
 
     # Current deps
     method = getattr(cls, DEPS_METHOD, None)
     if method:
-        args += get_method_args(cls, DEPS_METHOD, is_private)
+        args += get_method_args(cls, DEPS_METHOD, True)
 
     return args
 
 
-def get_class_dependencies(cls) -> Sequence[Arg]:
-    injection_type = get_class_injection_type(cls)
-
-    if injection_type == InjectionType.none:
+def get_public_deps(cls) -> Sequence[Arg]:
+    init_method = getattr(cls, '__init__')
+    if not init_method:
         return ()
-    elif injection_type == InjectionType.init:
-        return get_method_args(cls, '__init__')
-    elif injection_type == InjectionType.deps:
-        return get_class_deps(cls, True)
+
+    if has_private_injection(cls):
+        real_init = init_method(QUERY_WRAPPED_METHOD)
+        spec = getfullargspec(real_init)
+        return get_deps_from_argspec(spec)
+
     else:
-        raise ValueError()
+        return get_method_args(cls, '__init__')
+
+
+def get_class_dependencies(cls) -> Sequence[Arg]:
+    args = get_private_deps(cls)
+    args += get_public_deps(cls)
+    return args
 
 
 def instantiate_class(cls, instance_args: Optional[InstanceArgs] = None, **deps):
-    type = get_class_injection_type(cls)
 
+    priv_args = get_private_deps(cls)
+
+    # Collect priv args
+    priv_deps = {}
+    for priv_arg in priv_args:
+        key = priv_arg.name
+        if key in deps:
+            priv_deps[key] = deps[key]
+
+    # Collect public args
+    pub_deps = {}
+    for key, value in deps.items():
+        if key not in priv_deps:
+            pub_deps[key] = value
+
+    # Instance args and kwargs
     if instance_args:
         args = instance_args.args
         kwargs = instance_args.kwargs
@@ -107,11 +130,8 @@ def instantiate_class(cls, instance_args: Optional[InstanceArgs] = None, **deps)
         args = ()
         kwargs = {}
 
-    if type == InjectionType.none:
-        return cls()
-    elif type == InjectionType.init:
-        return cls(*args, **{**deps, **kwargs})
-    elif type == InjectionType.deps:
-        return cls(*args, _dependencies=deps, **kwargs)
+    # Instance
+    if priv_deps:
+        return cls(*args, **{DEPENDENCIES_ARG: priv_deps, **pub_deps, **kwargs})
     else:
-        raise ValueError()
+        return cls(*args, **{**pub_deps, **kwargs})

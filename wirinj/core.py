@@ -12,6 +12,9 @@ SEPARATOR_OPEN = '--------------- ' + wirinj.__name__ + ' ---------------'
 SEPARATOR_CLOSE = '--------------------------------------'
 
 DEPS_METHOD = '__deps__'
+DEPENDENCIES_ARG = '_dependencies'
+
+QUERY_WRAPPED_METHOD = '_query_wrapped_method'
 
 USE_SUBCLASSING_FACTORY = True
 
