@@ -1,4 +1,4 @@
-- __Test Python versions__. Test with Python `3.4`, `3.6`, `3.7` y `3.8` and fix issues.
+- __Test Python versions__. Test with Python `3.4`, ~~`3.5`~, ~~`3.6`~~, `3.7` y `3.8` and fix issues.
 
 - __docs__. Add `docs` to public API functions and classes.
 
