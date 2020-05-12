@@ -42,7 +42,7 @@ def inject(*dependencies: Locator,
     @inject inspects the arguments of the wrapped function signature and inject the required dependencies.
     You get all the needed dependencies through the function arguments.
 
-    It takes as arguments one or more Locator objects such as Dependencies or Autowiring. They will used to create an
+    It takes one or more Locator objects as arguments such as Dependencies or Autowiring. They will used to create an
     Injector object which will be used to perform the injection process.
 
     Alternative, you can pass directly an Injector object through the named argument "injector". In this case,

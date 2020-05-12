@@ -1,15 +1,16 @@
+import sys
 from inspect import getfullargspec, FullArgSpec
-from typing import Sequence, Callable, Optional
+from typing import Sequence, Callable, Optional, get_type_hints
 
 from .core import Arg, NotSet, InjectionType, DEPS_METHOD, InstanceArgs, NotSetType, DEPENDENCIES_ARG, \
-    QUERY_WRAPPED_METHOD
+    QUERY_WRAPPED_METHOD, InjectedType
 
 
 def is_builtin_cls(annotation) -> [NotSetType, bool]:
     return NotSet if annotation is NotSet else annotation.__module__ == 'builtins'
 
 
-def get_deps_from_argspec(spec: FullArgSpec, is_private=False) -> Sequence[Arg]:
+def get_deps_from_argspec(spec: FullArgSpec) -> Sequence[Arg]:
     result = []
 
     defaults_idx_base = (0 if spec.defaults is None else len(spec.defaults)) - len(spec.args)
@@ -20,7 +21,7 @@ def get_deps_from_argspec(spec: FullArgSpec, is_private=False) -> Sequence[Arg]:
         default_idx = defaults_idx_base + i
         default = spec.defaults[default_idx] if default_idx >= 0 else NotSet
         annotation = spec.annotations.get(name, NotSet)
-        result.append(Arg(name, annotation, default, is_private))
+        result.append(Arg(name, annotation, default))
         n += 1
     return result
 
@@ -40,7 +41,7 @@ def get_func_args(func: Callable) -> Sequence[Arg]:
     return get_deps_from_argspec(spec)
 
 
-def get_method_args(cls, method_name, is_private=False) -> Sequence[Arg]:
+def get_method_args(cls, method_name, injection_type=None) -> Sequence[Arg]:
     method = getattr(cls, method_name)
 
     assert method, 'Missing method {1} on class {0}'.format(cls.__name__, method_name)
@@ -49,10 +50,10 @@ def get_method_args(cls, method_name, is_private=False) -> Sequence[Arg]:
         '"{0}.{1}" must be Callable'.format(cls.__name__, method_name)
 
     spec = getfullargspec(method)
-    return get_deps_from_argspec(spec, is_private)
+    return get_deps_from_argspec(spec)
 
 
-def has_private_injection(cls) -> bool:
+def has_init_injection(cls) -> bool:
     init_method = getattr(cls, '__init__')
 
     if not init_method:
@@ -69,45 +70,83 @@ def has_private_injection(cls) -> bool:
     return False
 
 
-def get_private_deps(cls) -> Sequence[Arg]:
+def get_signature_deps(cls) -> Sequence[Arg]:
     args = []
 
     # Base deps
     for base_cls in cls.__bases__:
         if base_cls.__module__ != 'builtins':
-            args += get_private_deps(base_cls)
+            args += get_signature_deps(base_cls)
 
     # Current deps
     method = getattr(cls, DEPS_METHOD, None)
     if method:
-        args += get_method_args(cls, DEPS_METHOD, True)
+        args += get_method_args(cls, DEPS_METHOD, InjectionType.deps)
 
     return args
 
 
-def get_public_deps(cls) -> Sequence[Arg]:
+def get_init_deps(cls) -> Sequence[Arg]:
     init_method = getattr(cls, '__init__')
     if not init_method:
         return ()
 
-    if has_private_injection(cls):
+    if has_init_injection(cls):
         real_init = init_method(QUERY_WRAPPED_METHOD)
         spec = getfullargspec(real_init)
         return get_deps_from_argspec(spec)
 
     else:
-        return get_method_args(cls, '__init__')
+        return get_method_args(cls, '__init__', InjectionType.init)
 
+
+def get_field_deps(cls) -> Sequence[Arg]:
+
+    # Field annotations available from Python 3.6
+    if (sys.version_info.major == 3 and sys.version_info.minor < 6):
+        return []
+
+    result = []
+    for field_name, field_class in get_type_hints(cls).items():
+        if isinstance(getattr(cls, field_name), InjectedType):
+            result.append(Arg(field_name, field_class, NotSet))
+    return result
 
 def get_class_dependencies(cls) -> Sequence[Arg]:
-    args = get_private_deps(cls)
-    args += get_public_deps(cls)
+
+    # __init__ args must come first to know the position of its arguments
+    args = get_init_deps(cls)
+
+    args += get_field_deps(cls)
+    args += get_signature_deps(cls)
     return args
+
+
+
+def subclass_inject(cls, args, kwargs, kwinject):
+
+    #Injector = type(cls.__name__, (cls,), {'__metaclass__': WirinjMeta})
+    class Injector(cls):
+        def __new__(injector_cls, *args, **kwargs):
+
+            super_new = super(Injector, injector_cls).__new__
+            if super_new is object.__new__:
+                instance = super_new(cls)
+            else:
+                instance = super_new(cls, *args, **kwargs)
+
+            #Inject
+            for name, value in kwinject.items():
+                setattr(instance, name, value)
+
+            return instance
+    return Injector(*args, **kwargs)
 
 
 def instantiate_class(cls, instance_args: Optional[InstanceArgs] = None, **deps):
 
-    priv_args = get_private_deps(cls)
+    priv_args = get_field_deps(cls)
+    priv_args += get_signature_deps(cls)
 
     # Collect priv args
     priv_deps = {}
@@ -132,6 +171,9 @@ def instantiate_class(cls, instance_args: Optional[InstanceArgs] = None, **deps)
 
     # Instance
     if priv_deps:
-        return cls(*args, **{DEPENDENCIES_ARG: priv_deps, **pub_deps, **kwargs})
+        if has_init_injection(cls):
+            return cls(*args, **{DEPENDENCIES_ARG: priv_deps, **pub_deps, **kwargs})
+        else:
+            return subclass_inject(cls, args, {**pub_deps, **kwargs}, priv_deps)
     else:
         return cls(*args, **{**pub_deps, **kwargs})

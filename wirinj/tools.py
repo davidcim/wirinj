@@ -24,7 +24,7 @@ def get_func_factory(cls, func):
 
 
 def is_typing_type(cls):
-    return cls.__class__ is Type.__class__ and cls.__name__ == 'Type'
+    return cls.__class__ is Type.__class__ and getattr(cls, '_name', getattr(cls, '__name__', None)) == 'Type'
 
 def is_typing_clause(cls):
     return cls.__module__ == 'typing'

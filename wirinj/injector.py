@@ -3,18 +3,9 @@ from typing import Union, Sequence, List, Callable, Optional, Dict, Tuple
 
 from .locators import LocatorChain, LocatorCache
 from .core import logger, Arg, Dependency, NotSet, Locator, SEPARATOR_OPEN, SEPARATOR_CLOSE, InstanceArgs, \
-    filter_explicit_args
+    filter_explicit_args, Injected, InjectionType
 from .errors import MissingDependenciesError
 from .introspect import get_func_args
-
-
-class InjectType(type):
-    def __str__(self):
-        return 'Inject'
-
-
-class Injected(metaclass=InjectType):
-    pass
 
 
 class NotFoundType(type):
@@ -188,7 +179,7 @@ class Injector:
     def _get_function_args(self, func: Callable, args, kwargs):
         fn_args = get_func_args(func)
         injectable_args = filter_explicit_args(fn_args, args, kwargs)
-        return self._create_virtual_node(injectable_args, Arg(func.__name__, func.__class__, NotSet))
+        return self._create_virtual_node(injectable_args, Arg(func.__name__, type(func)))
 
     def _create_childs(self, arg_list: Optional[Sequence[Arg]], creation_path: Sequence[Arg]) -> Tuple[
         bool, Sequence[CreationNode]]:

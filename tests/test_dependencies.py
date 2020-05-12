@@ -1,3 +1,4 @@
+from typing import Any
 from unittest import TestCase
 
 from wirinj.injector import Injector, Injected
@@ -33,7 +34,7 @@ class TestCustomInstanceDependency(TestCase):
             pass
 
         class Foo:
-            def __init__(self, bar, baz=Injected):
+            def __init__(self, bar, baz = Injected):
                 self.bar = bar
                 self.baz = baz
 
@@ -48,7 +49,6 @@ class TestCustomInstanceDependency(TestCase):
         foo = injector.get(Foo, 'Ping')
         self.assertIs(foo.bar, 'Ping')
         self.assertIsNotNone(foo.baz)
-
 
         foo2 = injector.get(Foo, bar='Pong')
         self.assertIs(foo2.bar, 'Pong')

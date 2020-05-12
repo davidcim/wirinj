@@ -29,9 +29,10 @@ class NotSet(metaclass=NotSetType):
 
 
 class InjectionType(Enum):
-    init = 1
+    none = 0
+    field = 1
     deps = 2
-    none = 3
+    init = 3
 
 
 class InstanceArgs:
@@ -40,21 +41,26 @@ class InstanceArgs:
         self.kwargs = kwargs
 
 
+class InjectedType(type):
+    def __str__(self):
+        return 'Injected'
+
+class Injected(metaclass=InjectedType):
+    pass
+
+
 class Arg:
     def __init__(self, name: Optional[str], cls: Union[NotSetType, Any] = NotSet,
-                 default: Union[NotSetType, Any] = NotSet, is_private: bool = False):
+                 default: Union[NotSetType, Any] = NotSet):
         """
         Arg is the representation of a function argument in the context of dependency injection.
         @param name: Name of the argument.
         @param cls: Type annotation of the argument.
         @param default: Default value for the argument.
-        @param is_private: Private arguments are injected before running the __init__ method and cannot be overridden
-        with other arguments passed to the injector.
         """
         self.name = name
         self.cls = cls
         self.default = default
-        self.is_private = is_private
 
     def __str__(self) -> str:
         return "{}{}{}".format(
@@ -98,14 +104,13 @@ def filter_explicit_args(arg_list: Sequence[Arg], args, kwargs):
     i = -1
     for arg in arg_list:
 
-        if not arg.is_private:
-            i += 1
+        i += 1
 
-            if i < len(args):
-                continue
+        if i < len(args):
+            continue
 
-            if arg.name in kwargs and arg.default != kwargs[arg.name]:
-                continue
+        if arg.name in kwargs and arg.default != kwargs[arg.name]:
+            continue
 
         result.append(arg)
 

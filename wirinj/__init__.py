@@ -4,7 +4,8 @@ from .core import \
     logger, \
     Arg, \
     Dependency, \
-    Locator
+    Locator, \
+    Injected
 
 __all__.extend([
     logger,
@@ -22,12 +23,10 @@ __all__.extend([
 ])
 
 from .injector import \
-    Injector, \
-    Injected
+    Injector
 
 __all__.extend([
     Injector.__name__,
-    Injected.__name__,
 ])
 
 from .locators import \

@@ -3,4 +3,4 @@
 /dist
 /wirinj.egg-info
 __pycache__
-/python
+/python*
