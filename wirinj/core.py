@@ -1,7 +1,7 @@
 from abc import abstractmethod, ABCMeta
 from enum import Enum
 from logging import getLogger
-from typing import Optional, Union, Any, Sequence
+from typing import Optional, Union, Any, Sequence, Any, TypeVar
 
 import wirinj
 from .tools import get_cls_name
@@ -47,6 +47,8 @@ class InjectedType(type):
 
 class Injected(metaclass=InjectedType):
     pass
+
+InjectHere = TypeVar('InjectHere')
 
 
 class Arg:

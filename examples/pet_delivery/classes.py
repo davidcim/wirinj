@@ -1,17 +1,15 @@
 from logging import getLogger
-from typing import Type, Dict, List
+from typing import Type, Dict, List, TypeVar, Any
 
-from wirinj import deps
+from wirinj import deps, InjectHere
 
 logger = getLogger(__name__)
 
 
-class Pet:
-    def __deps__(self, sound: str, weight):
-        self.sound = sound
-        self.weight = weight
+class Pet(object):
+    sound: str = InjectHere
+    weight: float = InjectHere
 
-    @deps
     def __init__(self, gift_wrapped):
         self.gift_wrapped = gift_wrapped
 
@@ -32,12 +30,7 @@ class Bird(Pet):
 
 
 class Part:
-    def __deps__(self, mount_sound):
-        self.mount_sound = mount_sound
-
-    @deps
-    def __init__(self):
-        pass
+    mount_sound: str = InjectHere
 
     def mount(self):
         return self.mount_sound
@@ -61,20 +54,10 @@ class Container(Part):
 
 class VehicleBuilder:
 
-    def __deps__(self,
-                 engine_factory: Type[Engine],
-                 plate_factory: Type[Plate],
-                 wheel_factory: Type[Wheel],
-                 container_factory: Type[Container],
-                 ):
-        self.engine_factory = engine_factory
-        self.plate_factory = plate_factory
-        self.wheel_factory = wheel_factory
-        self.container_factory = container_factory
-
-    @deps
-    def __init__(self):
-        pass
+    engine_factory: Type[Engine] = InjectHere
+    plate_factory: Type[Plate] = InjectHere
+    wheel_factory: Type[Wheel] = InjectHere
+    container_factory: Type[Container] = InjectHere
 
     def build(self, recipe: Dict):
         parts = []  # type: List[Part]
@@ -91,12 +74,10 @@ class VehicleBuilder:
 
 
 class Vehicle:
-    def __deps__(self, builder: VehicleBuilder, recipe: Dict, max_load_weight):
-        self.builder = builder
-        self.recipe = recipe
-        self.max_load_weight = max_load_weight
+    builder: VehicleBuilder = InjectHere
+    recipe: Dict = InjectHere
+    max_load_weight: float = InjectHere
 
-    @deps
     def __init__(self):
         self.pets = []
         self.build()
@@ -150,13 +131,7 @@ class PetLoader:
 
 class PetPicker:
 
-    def __deps__(self, pet_store: Type[Pet]):
-        self.pet_store = pet_store
-
-    @deps
-    def __init__(self):
-        # raise Exception('HORROR!!!!')
-        pass
+    pet_store: Type[Pet] = InjectHere
 
     def pick(self, qty, gift_wrapped):
         info = 'Picking pets up: '
@@ -171,10 +146,6 @@ class PetPicker:
 
 class PetDeliveryPerson:
 
-    @deps
-    def __init__(self):
-        pass
-
     def deliver(self, pet_qty, miles, gift_wrapped):
         pass
 
@@ -182,10 +153,9 @@ class PetDeliveryPerson:
 class Bob(PetDeliveryPerson):
     """Bob builds a car and deliver pets in his vehicle repeating the route several times."""
 
-    def __deps__(self, vehicle: Vehicle, pet_picker: PetPicker, pet_loader: PetLoader):
-        self.vehicle = vehicle
-        self.pet_picker = pet_picker
-        self.pet_loader = pet_loader
+    vehicle: Vehicle = InjectHere
+    pet_picker: PetPicker = InjectHere
+    pet_loader: PetLoader = InjectHere
 
     def deliver(self, pet_qty, miles, gift_wrapped):
         # Pick up pets
@@ -202,15 +172,11 @@ class Bob(PetDeliveryPerson):
 class Mike(PetDeliveryPerson):
     """Mike builds several autonomous vehicles and use them to deliver the pets all together"""
 
-    def __deps__(self, vehicle_factory: Type[Vehicle], pet_picker: PetPicker, pet_loader: PetLoader):
-        self.vehicle_factory = vehicle_factory
-        self.pet_picker = pet_picker
-        self.pet_loader = pet_loader
+    vehicle_factory: Type[Vehicle] = InjectHere
+    pet_picker: PetPicker = InjectHere
+    pet_loader: PetLoader = InjectHere
 
-    @deps
-    def __init__(self):
-        super().__init__()
-        self.vehicles = []  # type: List[Vehicle]
+    vehicles: List[Vehicle] = []
 
     def get_vehicle(self):
         if self.vehicles:

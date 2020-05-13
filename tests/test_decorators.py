@@ -25,11 +25,22 @@ class Thing:
         self.param = param
 
 
+class Obj:
+    def __deps__(self, dependency):
+        #This is never executed. Makes work IDE inspections for "dependency".
+        self.dependency = dependency
+
+    @deps
+    def __init__(self, param):
+        self.param = param
+
+
 class TestDeps(TestCase):
 
     def test_dependencies_argument(self):
-        engine = Engine(_dependencies={'mount_sound': 'Brrrooommm'})
-        self.assertEqual(engine.mount_sound, 'Brrrooommm')
+        obj = Obj(10, _dependencies={'dependency': 20})
+        self.assertEqual(obj.dependency, 20)
+        self.assertEqual(obj.param, 10)
 
     def test_factory_with_arguments(self):
 

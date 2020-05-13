@@ -1,9 +1,9 @@
 import sys
-from inspect import getfullargspec, FullArgSpec
+from inspect import getfullargspec, FullArgSpec, signature, Signature, Parameter
 from typing import Sequence, Callable, Optional, get_type_hints
 
 from .core import Arg, NotSet, InjectionType, DEPS_METHOD, InstanceArgs, NotSetType, DEPENDENCIES_ARG, \
-    QUERY_WRAPPED_METHOD, InjectedType
+    QUERY_WRAPPED_METHOD, InjectedType, Injected, InjectHere
 
 
 def is_builtin_cls(annotation) -> [NotSetType, bool]:
@@ -25,23 +25,35 @@ def get_deps_from_argspec(spec: FullArgSpec) -> Sequence[Arg]:
         n += 1
     return result
 
+def get_deps_from_signature(signature: Signature) -> Sequence[Arg]:
+    result = []
+
+    for name, param in signature.parameters.items():
+        if name == 'self':
+            continue
+        if param.kind in [Parameter.VAR_POSITIONAL, Parameter.VAR_KEYWORD]:
+            continue
+        result.append(Arg(name, param.annotation, param.default))
+    return result
+
+
 
 def get_func_result(func: Callable) -> Sequence[Arg]:
     assert isinstance(func, Callable), \
         '"{}" must be Callable'.format(func.__name__)
-    spec = getfullargspec(func)
-    return spec.annotations.get('return', NotSet)
+
+    sign = signature(func)
+    return NotSet if sign.return_annotation is Parameter.empty else sign.return_annotation
 
 
 def get_func_args(func: Callable) -> Sequence[Arg]:
     assert isinstance(func, Callable), \
         '"{}" must be Callable'.format(func.__name__)
 
-    spec = getfullargspec(func)
-    return get_deps_from_argspec(spec)
+    return get_deps_from_signature(signature(func))
 
 
-def get_method_args(cls, method_name, injection_type=None) -> Sequence[Arg]:
+def get_method_args(cls, method_name) -> Sequence[Arg]:
     method = getattr(cls, method_name)
 
     assert method, 'Missing method {1} on class {0}'.format(cls.__name__, method_name)
@@ -49,8 +61,7 @@ def get_method_args(cls, method_name, injection_type=None) -> Sequence[Arg]:
     assert isinstance(method, Callable), \
         '"{0}.{1}" must be Callable'.format(cls.__name__, method_name)
 
-    spec = getfullargspec(method)
-    return get_deps_from_argspec(spec)
+    return get_deps_from_signature(signature(method))
 
 
 def has_init_injection(cls) -> bool:
@@ -81,7 +92,7 @@ def get_signature_deps(cls) -> Sequence[Arg]:
     # Current deps
     method = getattr(cls, DEPS_METHOD, None)
     if method:
-        args += get_method_args(cls, DEPS_METHOD, InjectionType.deps)
+        args += get_method_args(cls, DEPS_METHOD)
 
     return args
 
@@ -93,11 +104,10 @@ def get_init_deps(cls) -> Sequence[Arg]:
 
     if has_init_injection(cls):
         real_init = init_method(QUERY_WRAPPED_METHOD)
-        spec = getfullargspec(real_init)
-        return get_deps_from_argspec(spec)
+        return get_deps_from_signature(signature(real_init))
 
     else:
-        return get_method_args(cls, '__init__', InjectionType.init)
+        return get_method_args(cls, '__init__')
 
 
 def get_field_deps(cls) -> Sequence[Arg]:
@@ -108,7 +118,7 @@ def get_field_deps(cls) -> Sequence[Arg]:
 
     result = []
     for field_name, field_class in get_type_hints(cls).items():
-        if isinstance(getattr(cls, field_name), InjectedType):
+        if getattr(cls, field_name) is InjectHere:
             result.append(Arg(field_name, field_class, NotSet))
     return result
 
@@ -138,6 +148,9 @@ def subclass_inject(cls, args, kwargs, kwinject):
             #Inject
             for name, value in kwinject.items():
                 setattr(instance, name, value)
+
+            # Init must be called ourself since we are creating a cls instance and not a injector_cls instance.
+            instance.__init__(*args, **kwargs)
 
             return instance
     return Injector(*args, **kwargs)

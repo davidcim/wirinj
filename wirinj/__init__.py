@@ -5,14 +5,17 @@ from .core import \
     Arg, \
     Dependency, \
     Locator, \
-    Injected
+    Injected, \
+    InjectHere
 
 __all__.extend([
     logger,
     Arg.__class__,
     Dependency.__class__,
-    Locator.__class__],
-)
+    Locator.__class__,
+    Injected.__name__,
+    InjectHere.__name__,
+])
 
 from .decorators import \
     deps, inject
