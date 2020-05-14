@@ -69,9 +69,7 @@ from wirinj import INJECTED, inject, Autowiring, Definitions
 
 
 class MyService:
-    def __str__(self):
-        return f'<MyService>'
-
+    ...
 
 class MyObject:
     my_service: MyService = INJECTED
