@@ -11,8 +11,8 @@ Why choose wirinj
 - No naming conventions required.
 - [No factories needed](#factories) to create new instances.
 - Friendly with [IDE](https://en.wikipedia.org/wiki/Integrated_development_environment) 's [code completion](https://www.jetbrains.com/help/pycharm/auto-completing-code.html#) (e.g. with [PyCharm](https://www.jetbrains.com/pycharm/)).
-- Auto-wiring option.
-- Detailed injection reports to easily fix dependency problems.
+- [Autowiring](#autowiring) option.
+- [Injection reports](#injection-reports) to easily debug dependency problems.
 - Simple but powerful wiring configuration.
 - Open and extendable architecture.
 
