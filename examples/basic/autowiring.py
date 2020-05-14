@@ -32,10 +32,10 @@ def do(
         my_service: MyService,
         my_object_factory: Type[MyObject]
 ):
-    print(f'my_service = {my_service}')
+    print(my_service)
 
     my_object1 = my_object_factory(10)
-    print(f'my_object1 = {my_object1}')
+    print(my_object1)
 
 
 # Inject and run it
