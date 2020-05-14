@@ -1,6 +1,6 @@
 from typing import Union, Any, Optional, Sequence, Type, Callable
 
-from .core import Dependency, NotSet, Arg, InstanceArgs, USE_SUBCLASSING_FACTORY
+from .core import Dependency, NotSet, Arg, FunctionArgs, USE_SUBCLASSING_FACTORY
 from .injector import Injector
 from .introspect import get_class_dependencies, instantiate_class, \
     get_func_args, get_func_result
@@ -90,7 +90,7 @@ class CustomInstanceDependency(Dependency):
         args = get_func_args(self.func)
         return args
 
-    def get_instance(self, instance_args: InstanceArgs = None, **deps):
+    def get_instance(self, instance_args: FunctionArgs = None, **deps):
 
         if instance_args:
             return self.func(*instance_args.args, **{**deps, **instance_args.kwargs})

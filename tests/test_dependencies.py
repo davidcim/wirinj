@@ -1,7 +1,8 @@
 from typing import Any
 from unittest import TestCase
 
-from wirinj.injector import Injector, Injected
+from wirinj import INJECTED
+from wirinj.injector import Injector
 from wirinj.definition import Definitions, CustomSingleton, Singleton, CustomInstance
 from wirinj.decorators import inject
 
@@ -34,7 +35,7 @@ class TestCustomInstanceDependency(TestCase):
             pass
 
         class Foo:
-            def __init__(self, bar, baz = Injected):
+            def __init__(self, bar, baz: Baz = INJECTED):
                 self.bar = bar
                 self.baz = baz
 

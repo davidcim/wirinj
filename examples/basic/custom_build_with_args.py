@@ -11,7 +11,7 @@ class Cat:
         self.weight = weight
 
     def __str__(self):
-        return '{0} is a {2} pounds {1} cat.'.format(self.name, self.color, self.weight)
+        return f'{self.name} is a {self.color} pounds {self.weight} cat.'
 
 
 def create_cat(name, color):

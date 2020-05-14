@@ -1,238 +1,163 @@
 Wirinj
 ======
-A new dependency injection library for Python 3 with an original and clean design.
+A comfy dependency injection library for Python 3.
 
-Why another dependency injection library?
+Why choose wirinj
 -----------------------------------------
 
-Working on a large project I tried out [python-dependency-injector](https://github.com/ets-labs/python-dependency-injector) first.
-Then, I decided to switch to [pinject](https://github.com/google/pinject).
-As none of them had the features I wanted, I finally decided to write my own library to meet my needs:
-
 - Minimal boiler plate code.
-- Avoiding dependencies to the injection library itself.
-- Friendly with [IDE](https://en.wikipedia.org/wiki/Integrated_development_environment)'s [code completion](https://www.jetbrains.com/help/pycharm/auto-completing-code.html#) (e.g. with [PyCharm](https://www.jetbrains.com/pycharm/)).
-- Using [reflection](https://en.wikipedia.org/wiki/Reflection_(computer_programming)#Python) to detect dependencies automatically.
-- Easy to define and use of factories.
-- Autowiring option.
-- Easy to fix dependency problems.
-- Detailed injection reports.
-- Powerful but simple wiring configuration.
-- Avoiding naming conventions.
-- Detection of [type annotations](https://docs.python.org/3/library/typing.html).
-- [Private injection](#private-injection).
+- Injection via `__init__` or via [instance attributes](https://docs.python.org/3/tutorial/classes.html#class-and-instance-variables).
+- Dependencies automatically detected through [reflection](https://en.wikipedia.org/wiki/Reflection_(computer_programming)#Python).
+- No naming conventions required.
+- [No factories needed](#factories) to create new instances.
+- Friendly with [IDE](https://en.wikipedia.org/wiki/Integrated_development_environment) 's [code completion](https://www.jetbrains.com/help/pycharm/auto-completing-code.html#) (e.g. with [PyCharm](https://www.jetbrains.com/pycharm/)).
+- Auto-wiring option.
+- Detailed injection reports to easily fix dependency problems.
+- Simple but powerful wiring configuration.
 - Open and extendable architecture.
 
 Installation
 ------------
 
-python >= 3.5
+Python >= `3.6`
+
+Tested with Python `3.6`, `3.7` and `3.8`.
 
 ```shell
 $ pip install wirinj
 ```
 
-Minimal example
----------------
+How to use it
+-------------
 
-[minimal.py](./examples/basic/minimal.py):
-
-```python
-from wirinj import Injector, Autowiring
-
-class Cat:
-    pass
-
-inj = Injector(Autowiring())
-
-cat = inj.get(Cat)
-print(cat)
-```
-
-Returns:
-
-```
-<__main__.Cat object at 0x7fbe537f52b0>
-```
-
-Basic usage
------------
-
-Example ([basic_usage.py](examples/basic/basic_usage.py)):
-
-```python
-from wirinj import Injector, Definitions, Instance, Singleton, Factory
-
-class Cat:
-    pass
-
-class Dog:
-    pass
-
-# Wiring definitions
-defs = {
-    'sound': 'Meow',
-    Cat: Instance(),
-    Dog: Singleton(),
-    'cat_factory': Factory(Cat),
-}
-
-# Create injector
-inj = Injector(Definitions(defs))
-```
-\
-Get a `'sound'`:
-```python
-sound = inj.get('sound')
-print(sound)
-```
-```
-Meow
-```
-\
-Get a `Cat`:
-```python
-cat1 = inj.get(Cat)
-cat2 = inj.get(Cat)
-
-print(cat1)
-print(cat2)
-print(cat1 is cat2)
-```
-```
-<__main__.Cat object at 0x7fab3ddc2208>
-<__main__.Cat object at 0x7fab3c1fa438>
-False
-```
-`Cat` returns different instances each time because it is defined as an `Instance()`.
-
-\
-Get the `Dog`:
-```python
-dog = inj.get(Dog)
-dog2 = inj.get(Dog)
-
-print(dog)
-print(dog2)
-print(dog is dog2)
-```
-```
-<__main__.Dog object at 0x7fab3c1fa748>
-<__main__.Dog object at 0x7fab3c1fa748>
-True
-```
-`Dog` always returns the same object because it is defined as a `Singleton()`.
-
-\
-Get a `cat factory` and use it to create a new `Cat`:
-```python
-cat_factory = inj.get('cat_factory')
-cat3 = cat_factory()
-
-print(cat3)
-```
-```
-<__main__.Cat object at 0x7fc6a98119b0>
-```
-`cat_factory` returns a factory because it is defined as a `Factory(Cat)`.
-
-The @inject decorator
------------------------------
-
-If you are using an [IDE](https://en.wikipedia.org/wiki/Integrated_development_environment) such as [PyCharm](https://www.jetbrains.com/pycharm/), you will notice that [code completion](https://www.jetbrains.com/help/pycharm/auto-completing-code.html#) do not work with the previous example.
-The _IDE_ cannot know the type of, for example, `cat1` or `dog`.
-
-You can be IDE-friendly by decorating a function with `@inject`:
-
-Example ([inject_function.py](examples/basic/inject_function.py)):
-
-```python
-from wirinj import inject
-
-defs = {
-    'sound': 'Meow',
-    Cat: Instance(),
-    Dog: Singleton(),
-    'cat_factory': Factory(Cat),
-}
-
-@inject(Definitions(defs))
-def fn(cat1: Cat, cat2: Cat, dog: Dog, sound, cat_factory):
-
-    print('sound:', sound)
-    print('cat1:, cat1)
-    print('cat2:', cat2)
-    print('cat1 = cat2: ', cat1 is cat2)
-    print('dog:', dog)
-
-    cat3 = cat_factory()
-    print('cat3:', cat3)
-
-fn()
-```
-
-Returns:
-
-``` 
-sound:  Meow
-cat1:  <__main__.Cat object at 0x7f675ce5db38>
-cat2:  <__main__.Cat object at 0x7f675ce5df28>
-cat1 = cat2:  False
-dog:  <__main__.Dog object at 0x7f675ce5dac8>
-cat3:  <__main__.Cat object at 0x7f675ce72400>
-```
-
-`@inject` inspects the arguments of the `fn` function signature and inject the required dependencies.
-You get all the needed dependencies through the function arguments.
-You type less and it is clearer and IDE friendly.
-
-As `cat1` and `cat2` arguments matches `Cat: Instance()` configuration, two new `Cat` instances are injected.
-
-Simillary, `dog` matches `Dog: Singleton()`.
-Therefore, any `Dog` argument will be injected with the same single `Dog`. 
-
-In contrast, for `sound` and `cat_factory`, the configuration entry is matched by __name__ and not by __class__.
-This is because, in the wiring configuration `dict`, the __key__ of `'sound': 'Meow'` and `'cat_factory': Factory(Cat)` are of type `string`:
-
-- When the _key_ is a __class__, the injector will look at the __type__ annotation of the argument.
-- When the _key_ is a __string__ the injector will look at the __name__ of the argument.
-
-
-Factories
----------
-
-You can object that, in the previos example, the [code completion](https://www.jetbrains.com/help/pycharm/auto-completing-code.html#) will not work with `cat_factory`.
-That's true; fortunately, this can be easily fixed:
-
-#### IDE friendly factories
-
-Just add a type annotation of type `Type[Cat]` to the factory argument:
-
-Example ([ide_friendly_factory.py](examples/basic/ide_friendly_factory.py)):
+Example ([autowiring.py](examples/basic/autowiring.py)):
 
 ```python
 from typing import Type
 
-class Cat:
-    def __init__(self, sound):
-        pass
+from wirinj import INJECTED, inject, Autowiring, Definitions
 
-...
 
-@inject(...)
-def fn(cat_factory: Type[Cat]):
-    cat = cat_factory('Meow')
-    print('cat:', cat)
+class MyService:
+    def __str__(self):
+        return f'<{self.__class__.__name__}>'
 
-fn()
+
+class MyObject:
+    my_service: MyService = INJECTED
+    my_config: str = INJECTED
+
+    def __str__(self):
+        return f'<{self.__class__.__name__}> -> my_config: "{self.my_config}"' \
+               f', param: {self.param}, my_service: {self.my_service}'
+
+    def __init__(self, param):
+        self.param = param
+
+
+config = {
+    'my_config': 'some configuration',
+}
+
+
+# The decorator will inject a dependency into each function parameter
+# based on its name and/or annotation type
+@inject(Definitions(config), Autowiring())
+def do(
+        my_service: MyService,
+        my_object_factory: Type[MyObject]
+):
+    print('my_service = {}'.format(my_service))
+
+    my_object1 = my_object_factory(10)
+    print('my_object1 = {}'.format(my_object1))
+
+
+# Inject and run it
+do()
+```
+Returns:
+```
+my_service = <MyService>
+my_object1 = <MyObject> -> my_config: "some conf", param: 10, my_service: <MyService>
+```
+#### Explanation of the example above
+`MyService` and `MyObject` are the two user classes.
+
+`MyObject`'s attributes `my_service` and `my_config` are set with the constant `INJECTED` to indicate that they must be injected.
+
+The function named `do`, or any other name you choose, will contain the code inside the injection context with access to any required dependency. This function is decorated with `@inject` which injects dependencies into the function parameters. `@inject` takes as arguments one or more dependency sources. In this case, a `Definition` for the static config values and an `Autowiring` to automatically instantiate the required objects. `wirinj` will use this ordered list of sources to locate any required dependency.
+
+For the first parameter in function `do`, `my_service`:`MyService`, as it is not defined in the first source (`config`), it will be requested to the second one (`Autowiring`) which will instantiate a `MyService` object as inferred from the parameter type annotation. By default `Autowiring` will make the object a singleton and therefore any subsequent request for this class will get the same unique instance. 
+
+The second parameter, `my_object_factory` is annotated as `Type[MyObject]`. `Type` is part of the standard  [typing](https://docs.python.org/3/library/typing.html#typing.Type) library. It indicates that the parameter is not expected to be an object of class `MyObject` but the class `MyObject` itself or a subclass of it. Therefore you may use `my_object_factory` variable the same way you would use `MyObject` class. In the body of the function `do` this parameter is called to instantiate a new `MyObject`. By calling `my_object_factory` instead of `MyObject` you make `wirinj` to inject all its required dependencies during the instantiation:
+ ```python
+# This instantiate a MyObject but, as expected, nothing is injected.
+obj = MyObject(10)
+
+# This is the same but its dependencies are automatically injected BEFORE running __init__ 
+obj = my_object_factory(10)
 ```
 
-Now, it is recognized by the IDE:
+The last line runs the function `do` with no parameters. The `@inject` decorator will inject them from the dependency sources.
+
+Code completion on the IDE
+--------------------------
+
+If you are using an [IDE](https://en.wikipedia.org/wiki/Integrated_development_environment) such as [PyCharm](https://www.jetbrains.com/pycharm/), you will notice that [code completion](https://www.jetbrains.com/help/pycharm/auto-completing-code.html#) will work as expected in the previous example even for the factory.
 
 ![](img/code_inspect.png)
 
-\
-`Type[Cat]`, as explained in the [typing](https://docs.python.org/3/library/typing.html#typing.Type) module docs, represents the class `Cat` or a subclass of it:
+
+Injection types
+---------------
+
+### Into attributes
+
+Example ([private_injection.py](examples/private_injection/attribute_injection.py)):
+
+```python
+class Cat:
+    feeder: Feeder = INJECTED
+
+    def __init__(self, color, weight):
+        ...
+
+@inject(...)
+def fn(factory: Type[Cat]):
+    cat = factory('blue', 12)
+```
+
+When you call the factory:
+ 0. The attributes set to `INJECTED` are located and injected.
+ 0. The `__init__` method is called.
+
+
+#### Into `__init__` arguments
+
+Example ([init_injection.py](examples/private_injection/init_injection.py)):
+
+```python
+class Cat:
+    def __init__(self, color, weight, feeder: Feeder = INJECTED):
+        ...
+
+@inject(...)
+def fn(factory: Type[Cat]):
+    cat = factory('blue', 12)
+...
+```
+
+- `color` and `weight` are passed to `__init__`.
+- `feeder` is injected.
+
+For `__init__` injections, it is not required to set `INJECTED` as a default value. Any missing argument not passed to the constructor will be injected too. This way you can inject into third party classes whose code is not under your control. However, if you can assign `INJECTED` as a default value, the IDE won't complain about a missing argument and at the same time you will get a `MissingDependenciesError` if the dependency is missing which is helpful to early detect dependency issues.
+
+Factories
+---------
+I have already explained in the [first example](#how-to-use-it) of this README how to use factories. Now, I'm going to elaborate on that a little more.
+
+Pay attention to the function `func` and its argument `cat_class` in this example:
 
 ```python
 from typing import Type
@@ -250,43 +175,51 @@ print('Cat: ', func(Cat))
 print('BlackCat: ', func(BlackCat))
 ```
 
-Returns:
+It returns:
 ```
 Cat:  <__main__.Cat object at 0x7fc458bc7588>
 BlackCat:  <__main__.BlackCat object at 0x7fc458bc7588>
 ```
 
-### Defining the factory by type
+Note that you pass a class and not an object as an argument.
 
-To not be limited to a particular name, such as `cat_factory`, we can define the factory dependency by type.
+`Type[Cat]`, as described in the [typing](https://docs.python.org/3/library/typing.html#typing.Type) library docs, represents the class `Cat` or a subclass of it. A parameter annotated with `Type[]` expects to receive a class and not an object. In the body of the function, the parameter can be used the same way as its subscribed class would be used.
 
-```python
-defs = {
-    Type[Cat]: Factory(),
-}
-```
-
-This way you can name the argument as you like, as long as its type annotation is `Type[Cat]`.
-For example: 
+Example ([ide_friendly_factory.py](examples/basic/factory.py)):
 
 ```python
+from typing import Type
+
+class Cat:
+    def __init__(self, sound):
+        ...
+
 @inject(...)
-def fn(cats: Type[Cat]):
-    cat = cats()
+def fn(cat_factory: Type[Cat]):
+    cat = cat_factory('Meow')
+    print('cat:', cat)
+
+fn()
 ```
+By using the `Type[]` annotation, the IDE recognizes the parameter as it was the original class but with the difference that any newly created object will be automatically injected.
+
+ ```python
+# This instantiate a Cat object but, as expected, nothing is injected.
+cat = Cat('Meow')
+
+# This is the same but its dependencies are automatically injected BEFORE running __init__ 
+cat = cat_factory('Meow')
+```
+
+You have both things: the injection is enabled and the IDE completion is fully functional:
+
+![](img/code_inspect_cat.png)
+
 
 Dependency definitions
 ----------------------
 
-`Definitions` class is a convenient way to configure the wiring of your classes according to a definition `dict`.
-Most of the previous examples have made use of a `Definitions` object with a `dict` as an argument.
-Now I'm going to explain it in detail.
-
-### Definition format
-
-One or several `dict` define your wiring configuration. 
-Each _key_ represents the argument to be injected.
-The _value_ represents how is it injected:
+In previous examples, the wiring configuration has been relegated to the automatic `Autowiring` class. However you will gain control by explicity defining how your dependencies have to be met. The general way to do this would be something like this:
 
 ```python
 defs = {
@@ -294,16 +227,24 @@ defs = {
     'dog': Singleton(Dog),
 }
 
-inj = Injector(Definitions(defs))
+@inject(Definitions(defs))
 ```
+
+The `Definitions` class allows you to configure the wiring of your classes according to one or more definition `dict` parameters (`defs` in the example). The first definitions take precedence.
+
+### Definition format
+
+One or several `dict` arguments passed to the `Definition` class define your dependency configuration. 
+Each _key_ represents an argument being injected.
+The _value_ represents how is it injected:
 
 ### dict keys
 
-- If the _key_ is a `class` it will match the argument's __type__ annotation.
+- If the _key_ is a `class`, it will match the argument's __type__ annotation.
 E.g.: the first key in the example above causes any argument of type `Cat`, no matter its name, to be injected with a new _instance_ of `Cat`.
 
 - If the _key_ is a `string` it will match the argument __name__.
-E.g.: the second key causes any argument whose name is `'dog'` to be injected with a unique `Dog` instance.
+E.g.: the second key causes any argument with name `'dog'` to be injected with a unique `Dog` instance.
 Here, as the class can't be inferred from the key, you need to explicitly provide the class as an argument: `'dog': Singleton(Dog)`.  
 
 ### dict values
@@ -312,45 +253,64 @@ Each _value_ in the `dict` can be:
 
 - A _literal_ value you want to be injected. E.g. `'db_name': 'my-db'`.
 - `Instance`: inject a new instance each time.
-- `Singleton`: inject the same single instance every time.
-- `Factory`: inject a factory object that can be called to create new objects dynamically.
-- `CustomInstance`: similar to `Instance` but you provide a custom function which returns new instances.
-- `CustomSingleton`: similar to `Singleton` but you provide a custom function which returns the singleton.
-- Other user defined subclasses of `DependencyBuilder` or `Dependency`.
+- `Singleton`: inject the same unique instance every time.
+- `Factory`: inject a factory object that can be called to create new injected objects dynamically.
+- `CustomInstance`: similar to `Instance` but you provide a custom function to have full control over instantiation.
+- `CustomSingleton`: similar to `Singleton` but you provide a custom function which will create the object.
+- Any other user defined subclasses of `DependencyBuilder` or `Dependency`.
 
 Example ([definition_types.py](examples/basic/definition_types.py)):
 
 ```python
-def dog_creator():
+class House:
+    pass
+
+
+class Cat:
+    pass
+
+
+class Dog:
+    pass
+
+
+def dog_builder():
     """ Custom instantiation """
-    ...
+    dog = Dog()
+    dog.random = randint(50, 100)
     return dog
+
 
 defs = {
     House: Singleton(),
     Cat: Instance(),
     Type[Cat]: Factory(),
-    Dog: CustomInstance(dog_creator),
+    Dog: CustomInstance(dog_builder),
     Type[Dog]: Factory(),
 }
+
 
 @inject(Definitions(defs))
 def fn(house: House, cat_factory: Type[Cat], dog_factory: Type[Dog]):
     cat = cat_factory()
     dog = dog_factory()
-    ...    
+
+    print('house:', house)
+    print('cat:', cat)
+    print('dog:', dog)
+
 
 fn()
 ```
 
-### Providing a class
+### Custom dependency builders 
 
-`Instance`, `Singleton` and `Factory` accept an optional class argument to specify the class of the object to be created.
-You pass the class in two use cases:
+`Instance`, `Singleton` and `Factory` accept an optional class argument to indicate the class of the object to be created.
+There are two use cases where you need to pass the class:
 - The _key_ is a `string` and therefore the dependency class is undefined.
-- The argument is annotated with a _base class_ but you want to provide a _subclass_ of it.
+- The attribute or argument being injected is annotated with a _base class_ but you want to provide a specific _subclass_ of it.
 
-Example of both cases ([explicit_type.py](examples/basic/explicit_type.py)):
+Example of both use cases ([explicit_class.py](examples/basic/explicit_class.py)):
 
 ```python
 class Pet:
@@ -380,7 +340,7 @@ cat is a Cat
 pet is a Dog
 ```
 
-### Creation path
+### Configuring injection for specific classes 
 
 ```python
 class Nail:
@@ -395,18 +355,18 @@ class Cat:
         pass
 ```
 
-Imagine you ask for a `Cat` which requires a `Leg` which requires a `Nail`.
+Imagine `wirinj` is injecting a `Cat` which requires a `Leg` which requires a `Nail`.
 The injector will gather:
  - First, the `Nail` that has no dependencies.
  - Then, the `Leg` with the `Nail` as an argument.
  - Finally, the `Cat` with the `Leg` as an argument.
 
 We can think of this process as a path: `Cat` -> nail:`Nail` -> leg:`Leg`.
-I call this the `creation path`. 
+I call this the `instantiation path`. 
 
-You can explicitly specify a `creation path` constraint in the definition `dict`.
+You can explicitly specify a `instantiation path` constraint in the definition `dict`.
 
-Example ([creation_path.py](examples/basic/creation_path.py)):
+Example ([creation_path.py](examples/basic/instantiation_path.py)):
 
 ```python
 class Animal:
@@ -449,45 +409,52 @@ Dog: woof
 Cow: ?
 ```
 
-To restrict a definition entry to a particular `creation path` we use a `tuple` in the __key__ part.
-This `tuple` must match the last entries in the `creation path`.
+To restrict a definition entry to a particular `instantiation path` we use a `tuple` in the __key__ part.
+This `tuple` must match the last entries in the `instantiation path`.
 
 For each `tuple` entry, a `string` refers to the argument __name__ and a `class` refers to the argument __type__ annotation. 
 
 If two entries match the required dependency, the more specific one will be chosen.
 
-### Custom dependencies
+### Custom-built dependencies
 
 `Instance` and `Singleton` are used for simple class instantiation.
 When a custom process is required to create or locate the dependency, use `CustomInstance` or `CustomSingleton`.
 Both take a `function` as an argument.
 
-Example ([custom_dependencies.py](examples/basic/custom_dependencies.py)):
+Example ([custom_build.py](examples/basic/custom_build.py)):
 
 ```python
 from random import randint
+
+from wirinj import CustomInstance, inject, Definitions
+
 
 class Cat:
     def __init__(self, color, weight):
         self.color = color
         self.weight = weight
-        
+
     def __str__(self):
-        return 'A {1} pounds {0} cat.'.format(self.color, self.weight) 
+        return f'A {self.color} pounds {self.weight} cat.'
+
 
 def create_cat(color):
-    return Cat(color, randint(4, 20)) 
+    return Cat(color, randint(4, 20))
+
 
 defs = {
     'color': 'blue',
     Cat: CustomInstance(create_cat),
 }
 
+
 @inject(Definitions(defs))
 def fn(cat1: Cat, cat2: Cat, cat3: Cat):
     print(cat1)
     print(cat2)
     print(cat3)
+
 
 fn()
 ```
@@ -501,29 +468,35 @@ A 14 pounds blue cat.
 ```
 
 
-### Custom dependencies with arguments
+### Custom-built dependencies with arguments
 
 In the previous example, the object is instantiated without arguments,
-so all of `__init__`'s arguments are injected from dependencies.
+so all of its `__init__` arguments are injected from dependencies.
 
-If your class requires some arguments to be passed to be created (__explicit arguments__) in addition to the automatically injected dependencies (__injection arguments__),
+If your constructor requires some arguments to be passed (__explicit arguments__) and others to be injected (__injection arguments__),
 I recommend to follow these rules:
 
-0. In the `__init__` method, place the _explicit arguments_ in the first place and then, the _injection arguments_.
+0. In the `__init__` method, put the _explicit arguments_ first and then the _injection arguments_.
 This allow you to use positional arguments when you create the object.
 
-0. Set the default value of the _injection arguments_ to `None`.
+0. Set the default value of the _injection arguments_ to `INJECTED`.
 This way the IDE [code completion](https://www.jetbrains.com/help/pycharm/auto-completing-code.html#) will not complain about missing arguments.
-Also, this is the only way you can have defaults in your _explicit arguments_ if they are followed by _injection arguments_. 
+Also, this is the only way you can have defaults in your _explicit arguments_ when they are followed by _injection arguments_. 
 
-0. About the creation function that you pass to `CustomInstance`, use the same name and position for the _explicit arguments_ as you use in the `__init__` method. 
+0. About the builder function that you pass to `CustomInstance`, use the same name and position for the _explicit arguments_ as you use in the `__init__` method. 
 The rest of the arguments don't have to be related at all to the `__init__` arguments.
 Indeed, you can specify as many dependency arguments as you need to create the object.
 The injection process will inspect the function signature and will provide them.
 
-Example ([custom_dependencies_with_args.py](examples/basic/custom_dependencies_with_args.py)):
+Example ([custom_dependencies_with_args.py](examples/basic/custom_build_with_args.py)):
 
 ```python
+from random import randint
+from typing import Type
+
+from wirinj import CustomInstance, Factory, inject, Definitions
+
+
 class Cat:
     def __init__(self, name, color=None, weight=None):
         self.name = name
@@ -531,10 +504,12 @@ class Cat:
         self.weight = weight
 
     def __str__(self):
-        return '{0} is a {2} pounds {1} cat.'.format(self.name, self.color, self.weight)
+        return f'{self.name} is a {self.color} pounds {self.weight} cat.'
+
 
 def create_cat(name, color):
     return Cat(name, color, randint(4, 20))
+
 
 defs = {
     'color': 'black',
@@ -542,12 +517,14 @@ defs = {
     Type[Cat]: Factory(),
 }
 
+
 @inject(Definitions(defs))
 def fn(factory: Type[Cat]):
     cat = factory('Tom')
     print(cat)
     cat2 = factory('Sam')
     print(cat2)
+
 
 fn()
 ```
@@ -563,43 +540,31 @@ About the 3 arguments of `Cat`.`__init__`:
 - Another one from the dependency configuration.
 - The third is generated by the custom creation function.
 
-### Setting default to `Injected`
-Instead of setting the default value of the _injection arguments_ to `None`, you can use the special value `Injected`:
-- __Pros__: if one argument is missing, a specific `MissingDependenciesError` is raised.
-Otherwise, the execution would continue with `None` default and fail later in an unpredictable way.
-- __Cons__: you add a dependency to `wirinj`.
-
-```python
-from wirinj import Injected
-
-class Cat:
-    def __init__(self, name, color=Injected, weight=Injected):
-        ...
-```
-
 
 ### Splitting definitions
 
 You can split the dependency configuration in several `dict` definitions.
 
-Example ([splitted_definitions.py](examples/basic/splitted_definitions.py)):
+Example ([split_definitions.py](examples/basic/split_definitions.py)):
 
 ```python
-defs1 = {
+class Cat:
+    sound: str = INJECTED
+    weight: float = INJECTED
+
+config = {
+    'sound': 'meow',
+    'weight': 5,
+}
+
+wiring = {
     Cat: Instance(),
     Type[Cat]: Factory()
 }
 
-defs2 = {
-    Engine: Instance(),
-    Type[Engine]: Factory()
-}
-
-@inject(Definitions(defs1, defs2))
+@inject(Definitions(config, wiring))
 def fn(...):
     ...
-
-fn()
 ```
 
 `Definitions` accepts any number of definition `dict`s.
@@ -608,13 +573,8 @@ fn()
 Autowiring
 ----------
 
-Dependency injection comes at the cost of having to maintain it.
-The `Autowiring` class makes this task lighter.
-
-You add `Autowiring` at the end of the wiring configurations as a last resort to provide a dependency on the fly when it is undefined.
-The dependency type, `Instance`, `Singleton` or `Factory`, is chosen by heuristic rules.
-
-Let's view an example:
+You can add an `Autowiring` instance as a last resort to provide a dependency when it is undefined.
+A dependency type: `Instance`, `Singleton` or `Factory`, will be automatically chosen by heuristic rules.
 
 Example ([autowiring.py](examples/basic/autowiring.py)):
 
@@ -650,7 +610,7 @@ Dog
 Horse
 ```
 
-3 dependencies are automatically generated by `Autowiring`:
+Cat is the only dependency explicitly defined. The 3 others fall back to `Autowiring` which automatically create:
 - A `Dog` singleton.
 - A `Type[Horse]` factory.
 - A `Horse` instance.
@@ -658,14 +618,14 @@ Horse
 ### Heuristic rules
 
 `Autowiring` works only for arguments that have a _type annotation_:
-- If the type of the annotation is a `class`, as with `dog: Dog` in the previous example, a _singleton_ will be generated.
-- If the type is a `Type[class]`, as with `horse_factory: Type[Horse]`, a _factory_ will be provided.
-- If the injection occurs in a factory, as when `horse_factory()` is called, an _instance_ will be created.
+- If the annotation is a `class`, as with `dog: Dog` in the previous example, a _singleton_ will be generated.
+- If it is `Type[class]`, as with `horse_factory: Type[Horse]`, a _factory_ will be provided.
+- If the injection comes from a factory, as when `horse_factory()` is called, an _instance_ will be created.
 
 ### Autowiring for production
 
 In my opinion, this kind of _magic_ should not be used in production environments;
-you should not take the risk to leave such important wiring decisions in the hands of a heuristic algorithm.
+you should not take the risk of leaving such important wiring decisions in the hands of an heuristic algorithm.
 
 Fortunately, you can use `AutowiringReport` class to easily convert the autowiring configuration into a regular dependency definition:
 
@@ -759,7 +719,7 @@ class Cat:
         pass
 ```
 
-Now, we can debug the injection process just by setting the logging level to `DEBUG` and then, requesting a `Cat` from the `Injector`:
+We can debug the injection process just by setting the logging level to `DEBUG` and then, requesting a `Cat` from the `Injector`:
 
 Example ([injection_debug_report.py](examples/report/injection_debug_report.py)):
 
@@ -878,126 +838,6 @@ You'll need to track the stack trace to fix the problem.
 However, there is a task planned in the [TO-DO](TODO.md) list to log the `dependency tree` in these cases too.
 
 
-Private injection
-----------------------------------
-
-You use _dependency injection_ to decouple your class from its dependencies.
-A _factory_ is a specific type of dependency which allows you to create objects dynamically.
-
-Some factories require arguments to create the new object.
-These arguments are passed to the `__init__` method along with other required dependencies.
-
-I call _private injection_ to a special form of injection that separates the `__init__` arguments in two groups:
-- __Public__ arguments: those you pass to the factory.
-- __Private__ arguments: other implementation dependencies.
-
-Let's compare the two modes:
-
-### Regular injection
-
-Some of the `__init__` arguments come from the factory call;
-the remaining ones are injected automatically.
-
-Example ([regular_injection.py](examples/private_injection/regular_injection.py)):
-
-```python
-class Cat:
-    def __init__(self, color, weight, feeder: Feeder = None):
-        ...
-
-@inject(...)
-def fn(factory: Type[Cat]):
-    cat = factory('blue', 12)
-...
-```
-
-While `color` and `weight` are passed to the factory, the `feeder`argument is injected.
-
-### Private injection
-
-This is the equivalent _private_ form for the previous code:
-
-Example ([private_injection.py](examples/private_injection/private_injection.py)):
-
-```python
-class Cat:        
-    def __deps__(self, feeder: Feeder):
-        pass
-
-    @deps
-    def __init__(self, color, weight):
-        ...
-
-@inject(...)
-def fn(factory: Type[Cat]):
-    cat = factory('blue', 12)
-```
-
-The `@deps` decorator works this way:
- 
- 0. The `@deps` decorator on `__init__` enables _private injection_.
- 0. The special method `__deps__` define which dependencies are required.
- 0. All the dependencies are located and injected before the object is initialized.
- 0. Finally, the real `__init__` method is called.
-
-Notice that `__deps__` is a mock method, it is not ever called.
-Its sole purpose is to define the dependencies through its argument signature.
-
-
-### Why using private injection
-
-You split the initialization arguments in two parts:
-- `__init__` takes only the public API arguments.
-- _Private arguments_ are hidden and defined by the `__deps__` method.
-
-__pros__:
-- You keep your implementation dependencies apart of the public `__init__` interface.
-- Calling a factory is beautifully identical to instantiate a real class.
-- You keep the same `__init__` signature on all subclasses.
-- Each subclass can have different dependencies.
-- You don't have to code a new factory wrapper for each class to hide the implementation dependencies.
-- You can use positional arguments to call the factory.
-- You don't need to set the default values to `Null` for the _dependency arguments_.
-- You can freely use default values in `__init__`.  
-
-__cons__:
-- Your class will be dependent on the `@deps` decorator. 
-
-
-### `@deps` decorator
-
-In the previous sections, I have explained how this decorator is used.
-What I'm going to explain here is related only to the internal functioning of the feature.
-
-When you wrap `__init__` with the decorator `@deps`, two simple things happen:
- 0. A hidden argument `_dependencies` is added to `__init__` waiting for a `dict` to be passed.
- 0. The object is initialized with these dependencies __before__ `__init__` is called.  
-
-Notice that you can use this mechanism, even if you are not using other `wirinj` features, by setting the `_dependencies` argument manually.
-By the time `__init__` is called, your object dependencies will already be initialized.
-
-
-### Enabling code completion with `__deps__`
-
-Of course, the IDE (e.g. `PyCharm`) will not detect the dependencies defined by `__deps__`:
- 
-```python
-class Cat:        
-    def __deps__(self, feeder: Feeder):
-        pass
-```
-Ideally, an _IDE_ plugin would detect the `__deps__` signature, making the dependencies available in [code completion](https://www.jetbrains.com/help/pycharm/auto-completing-code.html#).
-
-As long as [this plugin doesn't exist](TODO.md), you can achieve the same by adding some mock code to the `__deps__` method:
-
-```python
-class Cat:        
-    def __deps__(self, feeder: Feeder):
-        self.feeder = feeder
-```
-It will never be executed, but now, the IDE will recognize the dependencies as member variables:
-   
-![](img/code_inspect_deps.png)
 
 
 ### A full injection example

@@ -1,7 +1,6 @@
 from abc import abstractmethod, ABCMeta
-from enum import Enum
 from logging import getLogger
-from typing import Optional, Union, Any, Sequence, Any, TypeVar
+from typing import Optional, Union, Sequence, Any, TypeVar
 
 import wirinj
 from .tools import get_cls_name
@@ -28,28 +27,16 @@ class NotSet(metaclass=NotSetType):
     pass
 
 
-class InjectionType(Enum):
-    none = 0
-    field = 1
-    deps = 2
-    init = 3
-
-
-class InstanceArgs:
+class FunctionArgs:
     def __init__(self, args, kwargs):
         self.args = args
         self.kwargs = kwargs
 
 
-class InjectedType(type):
-    def __str__(self):
-        return 'Injected'
+INJECTED = TypeVar('Injected')
 
-class Injected(metaclass=InjectedType):
-    pass
 
-InjectHere = TypeVar('InjectHere')
-
+InjectionClauses = [INJECTED]
 
 class Arg:
     def __init__(self, name: Optional[str], cls: Union[NotSetType, Any] = NotSet,
@@ -87,7 +74,7 @@ class Dependency(metaclass=ABCMeta):
         return None
 
     @abstractmethod
-    def get_instance(self, instance_args: InstanceArgs = None, **deps):
+    def get_instance(self, instance_args: FunctionArgs = None, **deps):
         pass
 
 
@@ -101,7 +88,7 @@ class Locator(metaclass=ABCMeta):
         pass
 
 
-def filter_explicit_args(arg_list: Sequence[Arg], args, kwargs):
+def filter_direct_args(arg_list: Sequence[Arg], args, kwargs):
     result = []
     i = -1
     for arg in arg_list:

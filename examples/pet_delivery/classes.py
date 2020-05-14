@@ -1,14 +1,14 @@
 from logging import getLogger
 from typing import Type, Dict, List, TypeVar, Any
 
-from wirinj import deps, InjectHere
+from wirinj import deps, INJECTED
 
 logger = getLogger(__name__)
 
 
 class Pet(object):
-    sound: str = InjectHere
-    weight: float = InjectHere
+    sound: str = INJECTED
+    weight: float = INJECTED
 
     def __init__(self, gift_wrapped):
         self.gift_wrapped = gift_wrapped
@@ -30,7 +30,7 @@ class Bird(Pet):
 
 
 class Part:
-    mount_sound: str = InjectHere
+    mount_sound: str = INJECTED
 
     def mount(self):
         return self.mount_sound
@@ -54,10 +54,10 @@ class Container(Part):
 
 class VehicleBuilder:
 
-    engine_factory: Type[Engine] = InjectHere
-    plate_factory: Type[Plate] = InjectHere
-    wheel_factory: Type[Wheel] = InjectHere
-    container_factory: Type[Container] = InjectHere
+    engine_factory: Type[Engine] = INJECTED
+    plate_factory: Type[Plate] = INJECTED
+    wheel_factory: Type[Wheel] = INJECTED
+    container_factory: Type[Container] = INJECTED
 
     def build(self, recipe: Dict):
         parts = []  # type: List[Part]
@@ -74,9 +74,9 @@ class VehicleBuilder:
 
 
 class Vehicle:
-    builder: VehicleBuilder = InjectHere
-    recipe: Dict = InjectHere
-    max_load_weight: float = InjectHere
+    builder: VehicleBuilder = INJECTED
+    recipe: Dict = INJECTED
+    max_load_weight: float = INJECTED
 
     def __init__(self):
         self.pets = []
@@ -131,7 +131,7 @@ class PetLoader:
 
 class PetPicker:
 
-    pet_store: Type[Pet] = InjectHere
+    pet_store: Type[Pet] = INJECTED
 
     def pick(self, qty, gift_wrapped):
         info = 'Picking pets up: '
@@ -153,9 +153,9 @@ class PetDeliveryPerson:
 class Bob(PetDeliveryPerson):
     """Bob builds a car and deliver pets in his vehicle repeating the route several times."""
 
-    vehicle: Vehicle = InjectHere
-    pet_picker: PetPicker = InjectHere
-    pet_loader: PetLoader = InjectHere
+    vehicle: Vehicle = INJECTED
+    pet_picker: PetPicker = INJECTED
+    pet_loader: PetLoader = INJECTED
 
     def deliver(self, pet_qty, miles, gift_wrapped):
         # Pick up pets
@@ -172,9 +172,9 @@ class Bob(PetDeliveryPerson):
 class Mike(PetDeliveryPerson):
     """Mike builds several autonomous vehicles and use them to deliver the pets all together"""
 
-    vehicle_factory: Type[Vehicle] = InjectHere
-    pet_picker: PetPicker = InjectHere
-    pet_loader: PetLoader = InjectHere
+    vehicle_factory: Type[Vehicle] = INJECTED
+    pet_picker: PetPicker = INJECTED
+    pet_loader: PetLoader = INJECTED
 
     vehicles: List[Vehicle] = []
 

@@ -1,39 +1,28 @@
 import sys
-from inspect import getfullargspec, FullArgSpec, signature, Signature, Parameter
+from inspect import getfullargspec, signature, Signature, Parameter, _empty
 from typing import Sequence, Callable, Optional, get_type_hints
 
-from .core import Arg, NotSet, InjectionType, DEPS_METHOD, InstanceArgs, NotSetType, DEPENDENCIES_ARG, \
-    QUERY_WRAPPED_METHOD, InjectedType, Injected, InjectHere
+from .core import Arg, NotSet, DEPS_METHOD, FunctionArgs, NotSetType, DEPENDENCIES_ARG, \
+    QUERY_WRAPPED_METHOD, InjectionClauses
 
 
 def is_builtin_cls(annotation) -> [NotSetType, bool]:
     return NotSet if annotation is NotSet else annotation.__module__ == 'builtins'
 
 
-def get_deps_from_argspec(spec: FullArgSpec) -> Sequence[Arg]:
+def get_deps_from_signature(signature: Signature, exclude_first=False) -> Sequence[Arg]:
     result = []
 
-    defaults_idx_base = (0 if spec.defaults is None else len(spec.defaults)) - len(spec.args)
-    n = 0
-    for i, name in enumerate(spec.args):
-        if name == 'self':
-            continue
-        default_idx = defaults_idx_base + i
-        default = spec.defaults[default_idx] if default_idx >= 0 else NotSet
-        annotation = spec.annotations.get(name, NotSet)
-        result.append(Arg(name, annotation, default))
-        n += 1
-    return result
-
-def get_deps_from_signature(signature: Signature) -> Sequence[Arg]:
-    result = []
-
+    first = True
     for name, param in signature.parameters.items():
-        if name == 'self':
+        if first and exclude_first:
+            exclude_first = False
             continue
         if param.kind in [Parameter.VAR_POSITIONAL, Parameter.VAR_KEYWORD]:
             continue
-        result.append(Arg(name, param.annotation, param.default))
+        annotation = NotSet if param.annotation is _empty else param.annotation
+        default = NotSet if param.default is _empty else param.default
+        result.append(Arg(name, annotation, default))
     return result
 
 
@@ -61,7 +50,7 @@ def get_method_args(cls, method_name) -> Sequence[Arg]:
     assert isinstance(method, Callable), \
         '"{0}.{1}" must be Callable'.format(cls.__name__, method_name)
 
-    return get_deps_from_signature(signature(method))
+    return get_deps_from_signature(signature(method), True)
 
 
 def has_init_injection(cls) -> bool:
@@ -104,13 +93,13 @@ def get_init_deps(cls) -> Sequence[Arg]:
 
     if has_init_injection(cls):
         real_init = init_method(QUERY_WRAPPED_METHOD)
-        return get_deps_from_signature(signature(real_init))
+        return get_deps_from_signature(signature(real_init), True)
 
     else:
         return get_method_args(cls, '__init__')
 
 
-def get_field_deps(cls) -> Sequence[Arg]:
+def get_attribute_deps(cls) -> Sequence[Arg]:
 
     # Field annotations available from Python 3.6
     if (sys.version_info.major == 3 and sys.version_info.minor < 6):
@@ -118,7 +107,7 @@ def get_field_deps(cls) -> Sequence[Arg]:
 
     result = []
     for field_name, field_class in get_type_hints(cls).items():
-        if getattr(cls, field_name) is InjectHere:
+        if getattr(cls, field_name) in InjectionClauses:
             result.append(Arg(field_name, field_class, NotSet))
     return result
 
@@ -127,7 +116,7 @@ def get_class_dependencies(cls) -> Sequence[Arg]:
     # __init__ args must come first to know the position of its arguments
     args = get_init_deps(cls)
 
-    args += get_field_deps(cls)
+    args += get_attribute_deps(cls)
     args += get_signature_deps(cls)
     return args
 
@@ -156,9 +145,9 @@ def subclass_inject(cls, args, kwargs, kwinject):
     return Injector(*args, **kwargs)
 
 
-def instantiate_class(cls, instance_args: Optional[InstanceArgs] = None, **deps):
+def instantiate_class(cls, instance_args: Optional[FunctionArgs] = None, **deps):
 
-    priv_args = get_field_deps(cls)
+    priv_args = get_attribute_deps(cls)
     priv_args += get_signature_deps(cls)
 
     # Collect priv args

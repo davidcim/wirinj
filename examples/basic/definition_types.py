@@ -16,7 +16,7 @@ class Dog:
     pass
 
 
-def dog_creator():
+def dog_builder():
     """ Custom instantiation """
     dog = Dog()
     dog.random = randint(50, 100)
@@ -27,7 +27,7 @@ defs = {
     House: Singleton(),
     Cat: Instance(),
     Type[Cat]: Factory(),
-    Dog: CustomInstance(dog_creator),
+    Dog: CustomInstance(dog_builder),
     Type[Dog]: Factory(),
 }
 

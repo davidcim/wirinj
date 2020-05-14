@@ -1,7 +1,7 @@
 from unittest import TestCase
 
-from wirinj import Autowiring, deps
-from wirinj.core import Injected, InjectHere
+from wirinj import Autowiring
+from wirinj.core import INJECTED
 from wirinj.injector import Injector
 
 
@@ -11,7 +11,7 @@ class Reality(object):
 
 class Thing:
 
-    reality: Reality = InjectHere
+    reality: Reality = INJECTED
 
     def __init__(self, param):
         self.param = param

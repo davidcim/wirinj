@@ -10,7 +10,7 @@ class Cat:
 
 @inject(Autowiring())
 def fn(cat_factory: Type[Cat]):
-    cat = cat_factory()
+    cat = cat_factory('Meow')
     print('cat:', cat)
 
 

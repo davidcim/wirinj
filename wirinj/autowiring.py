@@ -2,11 +2,11 @@ from abc import ABCMeta, abstractmethod
 from inspect import isabstract
 from typing import Optional, Sequence
 
-from wirinj import Definitions, Locator, Arg, Dependency
-from wirinj.core import SEPARATOR_OPEN, SEPARATOR_CLOSE, NotSet
-from wirinj.dependencies import SingletonWrapper, FactoryDependency, InstanceDependency
-from wirinj.introspect import is_builtin_cls
-from wirinj.tools import is_typing_type, get_typing_args, is_typing_clause
+from .definition import Definitions
+from .core import Dependency, Arg, Locator, SEPARATOR_OPEN, SEPARATOR_CLOSE, NotSet
+from .dependencies import SingletonWrapper, FactoryDependency, InstanceDependency
+from .introspect import is_builtin_cls
+from .tools import is_typing_type, get_typing_args, is_typing_clause
 
 
 class AutowiringReportBase(metaclass=ABCMeta):

@@ -9,7 +9,7 @@ class Cat:
         self.weight = weight
 
     def __str__(self):
-        return 'A {1} pounds {0} cat.'.format(self.color, self.weight)
+        return f'A {self.color} pounds {self.weight} cat.'
 
 
 def create_cat(color):

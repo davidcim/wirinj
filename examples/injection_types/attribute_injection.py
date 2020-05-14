@@ -1,6 +1,6 @@
 from typing import Type
 
-from wirinj import inject, Autowiring
+from wirinj import inject, Autowiring, deps, INJECTED
 
 
 class Feeder:
@@ -8,10 +8,11 @@ class Feeder:
 
 
 class Cat:
-    def __init__(self, color, weight, feeder: Feeder = None):
+    feeder: Feeder = INJECTED
+
+    def __init__(self, color, weight):
         self.color = color
         self.weight = weight
-        self.feeder = feeder
 
 
 @inject(Autowiring())

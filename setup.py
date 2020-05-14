@@ -11,7 +11,7 @@ setuptools.setup(
     version=version,
     author="David Cimadevilla",
     author_email="dev.davidcim@gmail.com",
-    description="A new dependency injection library for Python 3 with an original and clean design.",
+    description="A comfy dependency injection library.",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/davidcim/wirinj",
@@ -21,5 +21,5 @@ setuptools.setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
-    python_requires='>=3.5',
+    python_requires='>=3.6',
 )

@@ -1,11 +1,11 @@
 from logging import ERROR, INFO, DEBUG
-from typing import Union, Sequence, List, Callable, Optional, Dict, Tuple
+from typing import Union, Sequence, Callable, Optional, Dict, Tuple
 
-from .locators import LocatorChain, LocatorCache
-from .core import logger, Arg, Dependency, NotSet, Locator, SEPARATOR_OPEN, SEPARATOR_CLOSE, InstanceArgs, \
-    filter_explicit_args, Injected, InjectionType
+from .core import logger, Arg, Dependency, NotSet, Locator, SEPARATOR_OPEN, SEPARATOR_CLOSE, FunctionArgs, \
+    filter_direct_args, InjectionClauses
 from .errors import MissingDependenciesError
 from .introspect import get_func_args
+from .locators import LocatorChain, LocatorCache
 
 
 class NotFoundType(type):
@@ -28,7 +28,8 @@ class Failed(metaclass=FailedType):
 
 class CreationNode:
     def __init__(self,
-                 arg: Arg, dep: Union[Dependency, NotFoundType, None],
+                 arg: Arg,
+                 dep: Union[Dependency, NotFoundType, None],
                  childs: Sequence['CreationNode'] = (),
                  ):
         self.arg = arg
@@ -121,7 +122,7 @@ def has_a_valid_default(arg: Arg):
     if arg.default is NotSet:
         return False
 
-    if arg.cls != NotSet and arg.default in [Injected]:
+    if arg.cls != NotSet and arg.default in InjectionClauses:
         return False
 
     return True
@@ -161,7 +162,7 @@ class Injector:
         self.locator.initialize(self)
 
     def get(self, cls, *args, **kwargs):
-        success, root = self._create_node((), Arg(None, cls), InstanceArgs(args, kwargs))
+        success, root = self._create_node((), Arg(None, cls), FunctionArgs(args, kwargs))
         _after_tree_creation(success, root)
         return root.instance
 
@@ -178,7 +179,7 @@ class Injector:
 
     def _get_function_args(self, func: Callable, args, kwargs):
         fn_args = get_func_args(func)
-        injectable_args = filter_explicit_args(fn_args, args, kwargs)
+        injectable_args = filter_direct_args(fn_args, args, kwargs)
         return self._create_virtual_node(injectable_args, Arg(func.__name__, type(func)))
 
     def _create_childs(self, arg_list: Optional[Sequence[Arg]], creation_path: Sequence[Arg]) -> Tuple[
@@ -199,7 +200,7 @@ class Injector:
             childs.append(child)
         return success, childs
 
-    def _create_node(self, parent_path: Sequence[Arg], arg: Arg, instance_args: Optional[InstanceArgs] = None) -> Tuple[
+    def _create_node(self, parent_path: Sequence[Arg], arg: Arg, instance_args: Optional[FunctionArgs] = None) -> Tuple[
         bool, CreationNode]:
         """
         @return: Returns two values. The first value is True if the instantiation succeded. The second is the new
@@ -227,7 +228,7 @@ class Injector:
 
             # Remove instance args
             if instance_args:
-                dep_args = filter_explicit_args(dep_args, instance_args.args, instance_args.kwargs)
+                dep_args = filter_direct_args(dep_args, instance_args.args, instance_args.kwargs)
 
             # Create childs
             childs_success, childs = self._create_childs(dep_args, current_path)
