@@ -54,7 +54,7 @@ Table of Contents
      * [Debugging the injection](#debugging-the-injection)
      * [Missing dependencies](#missing-dependencies)
      * [Instance error](#instance-error)
-     * [A full injection example](#a-full-injection-example)
+  * [A complete injection example](#a-complete-injection-example)
 
 
 How to use it
@@ -870,7 +870,7 @@ However, there is a task planned in the [TO-DO](TODO.md) list to log the `depend
 
 
 
-### A full injection example
+### A complete example
 
 This silly example aims to illustrate several aspects of the `wirinj` library.
 
