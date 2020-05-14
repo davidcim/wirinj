@@ -27,6 +27,36 @@ Tested with Python `3.6`, `3.7` and `3.8`.
 $ pip install wirinj
 ```
 
+Table of Contents
+=================
+
+  * [How to use it](#how-to-use-it)
+  * [Code completion on the IDE](#code-completion-on-the-ide)
+  * [Injection types](#injection-types)
+     * [Into attributes](#into-attributes)
+     * [Into __init__ arguments](#into-__init__-arguments)
+  * [Factories](#factories)
+  * [Dependency definitions](#dependency-definitions)
+     * [Definition format](#definition-format)
+     * [dict keys](#dict-keys)
+     * [dict values](#dict-values)
+     * [Custom dependency builders](#custom-dependency-builders)
+     * [Configuring injection for specific classes](#configuring-injection-for-specific-classes)
+     * [Custom-built dependencies](#custom-built-dependencies)
+     * [Custom-built dependencies with arguments](#custom-built-dependencies-with-arguments)
+     * [Splitting definitions](#splitting-definitions)
+  * [Autowiring](#autowiring)
+     * [Heuristic rules](#heuristic-rules)
+     * [Autowiring for production](#autowiring-for-production)
+     * [Autowiring report](#autowiring-report)
+     * [<em>No singletons</em> option](#no-singletons-option)
+  * [Injection reports](#injection-reports)
+     * [Debugging the injection](#debugging-the-injection)
+     * [Missing dependencies](#missing-dependencies)
+     * [Instance error](#instance-error)
+     * [A full injection example](#a-full-injection-example)
+
+
 How to use it
 -------------
 
@@ -40,7 +70,7 @@ from wirinj import INJECTED, inject, Autowiring, Definitions
 
 class MyService:
     def __str__(self):
-        return f'<{self.__class__.__name__}>'
+        return f'<MyService>'
 
 
 class MyObject:
@@ -48,7 +78,7 @@ class MyObject:
     my_config: str = INJECTED
 
     def __str__(self):
-        return f'<{self.__class__.__name__}> -> my_config: "{self.my_config}"' \
+        return f'<MyObject> -> my_config: "{self.my_config}"' \
                f', param: {self.param}, my_service: {self.my_service}'
 
     def __init__(self, param):
@@ -56,7 +86,7 @@ class MyObject:
 
 
 config = {
-    'my_config': 'some configuration',
+    'my_config': 'some conf',
 }
 
 
@@ -67,10 +97,10 @@ def do(
         my_service: MyService,
         my_object_factory: Type[MyObject]
 ):
-    print('my_service = {}'.format(my_service))
+    print(f'my_service = {my_service}')
 
     my_object1 = my_object_factory(10)
-    print('my_object1 = {}'.format(my_object1))
+    print(f'my_object1 = {my_object1}')
 
 
 # Inject and run it
@@ -86,7 +116,7 @@ my_object1 = <MyObject> -> my_config: "some conf", param: 10, my_service: <MySer
 
 `MyObject`'s attributes `my_service` and `my_config` are set with the constant `INJECTED` to indicate that they must be injected.
 
-The function named `do`, or any other name you choose, will contain the code inside the injection context with access to any required dependency. This function is decorated with `@inject` which injects dependencies into the function parameters. `@inject` takes as arguments one or more dependency sources. In this case, a `Definition` for the static config values and an `Autowiring` to automatically instantiate the required objects. `wirinj` will use this ordered list of sources to locate any required dependency.
+The function named `do`, or any other name you choose, will contain the code inside the injection context with access to any required dependency. This function is decorated with `@inject` which will inject the dependencies into the function parameters. `@inject` takes as arguments one or more dependency sources. In this case, a `Definition` for the static config values and an `Autowiring` to automatically instantiate the required objects. `wirinj` will use this ordered list of sources to locate any required dependency.
 
 For the first parameter in function `do`, `my_service`:`MyService`, as it is not defined in the first source (`config`), it will be requested to the second one (`Autowiring`) which will instantiate a `MyService` object as inferred from the parameter type annotation. By default `Autowiring` will make the object a singleton and therefore any subsequent request for this class will get the same unique instance. 
 
@@ -112,7 +142,7 @@ If you are using an [IDE](https://en.wikipedia.org/wiki/Integrated_development_e
 Injection types
 ---------------
 
-### Into attributes
+#### Into attributes
 
 Example ([private_injection.py](examples/private_injection/attribute_injection.py)):
 

@@ -5,7 +5,7 @@ from wirinj import INJECTED, inject, Autowiring, Definitions
 
 class MyService:
     def __str__(self):
-        return f'<{self.__class__.__name__}>'
+        return f'<MyService>'
 
 
 class MyObject:
@@ -13,7 +13,7 @@ class MyObject:
     my_config: str = INJECTED
 
     def __str__(self):
-        return f'<{self.__class__.__name__}> -> my_config: "{self.my_config}"' \
+        return f'<MyObject> -> my_config: "{self.my_config}"' \
                f', param: {self.param}, my_service: {self.my_service}'
 
     def __init__(self, param):
@@ -32,10 +32,10 @@ def do(
         my_service: MyService,
         my_object_factory: Type[MyObject]
 ):
-    print('my_service = {}'.format(my_service))
+    print(f'my_service = {my_service}')
 
     my_object1 = my_object_factory(10)
-    print('my_object1 = {}'.format(my_object1))
+    print(f'my_object1 = {my_object1}')
 
 
 # Inject and run it
