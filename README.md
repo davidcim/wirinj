@@ -77,12 +77,8 @@ class MyObject:
     my_service: MyService = INJECTED
     my_config: str = INJECTED
 
-    def __str__(self):
-        return f'<MyObject> -> my_config: "{self.my_config}"' \
-               f', param: {self.param}, my_service: {self.my_service}'
-
     def __init__(self, param):
-        self.param = param
+        ...
 
 
 config = {
