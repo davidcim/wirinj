@@ -63,11 +63,6 @@ How to use it
 Example ([autowiring.py](examples/basic/autowiring.py)):
 
 ```python
-from typing import Type
-
-from wirinj import INJECTED, inject, Autowiring, Definitions
-
-
 class MyService:
     ...
 
