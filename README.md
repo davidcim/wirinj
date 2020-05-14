@@ -63,6 +63,8 @@ How to use it
 Example ([autowiring.py](examples/basic/autowiring.py)):
 
 ```python
+...
+
 class MyService:
     ...
 
