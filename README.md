@@ -97,7 +97,7 @@ def do(
 # Inject and run it
 do()
 ```
-Returns:
+Output:
 ```
 my_service = <MyService>
 my_object1 = <MyObject> -> my_config: "some conf", param: 10, my_service: <MyService>
@@ -196,7 +196,7 @@ print('Cat: ', func(Cat))
 print('BlackCat: ', func(BlackCat))
 ```
 
-It returns:
+Output:
 ```
 Cat:  <__main__.Cat object at 0x7fc458bc7588>
 BlackCat:  <__main__.BlackCat object at 0x7fc458bc7588>
@@ -355,7 +355,7 @@ def fn(cat, pet: Pet):
 fn()
 ```
 
-returns:
+Output:
 ```
 cat is a Cat
 pet is a Dog
@@ -422,7 +422,7 @@ def fn(cat: Cat, dog: Dog, cow: Cow):
 fn()
 ```
 
-Returns:
+Output:
 
 ```
 Cat: meow
@@ -480,7 +480,7 @@ def fn(cat1: Cat, cat2: Cat, cat3: Cat):
 fn()
 ```
 
-returns:
+Output:
 
 ```
 A 11 pounds blue cat.
@@ -550,7 +550,7 @@ def fn(factory: Type[Cat]):
 fn()
 ```
 
-returns:
+Output:
 ```
 Tom is a 8 pounds black cat.
 Sam is a 14 pounds black cat.
@@ -623,7 +623,7 @@ Example ([autowiring.py](examples/basic/autowiring.py)):
     fn()
 ```
 
-Returns:
+Output:
 
 ```
 Cat
@@ -668,7 +668,7 @@ fn()
 print(report.get())
 ```
 
-Returns:
+Output:
 ```
 ...
 --------------- wirinj ---------------
