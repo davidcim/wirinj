@@ -6,7 +6,7 @@ Why choose wirinj
 -----------------------------------------
 
 - Minimal boiler plate code.
-- Injection via `__init__` or via [instance attributes](https://docs.python.org/3/tutorial/classes.html#class-and-instance-variables).
+- Injection via `__init__` or via _attributes_.
 - Dependencies automatically detected through [reflection](https://en.wikipedia.org/wiki/Reflection_(computer_programming)#Python).
 - No naming conventions required.
 - [No factories needed](#factories) to create new instances.
@@ -104,13 +104,13 @@ my_object1 = <MyObject> -> my_config: "some conf", param: 10, my_service: <MySer
 #### Explanation of the example above
 `MyService` and `MyObject` are the two user classes.
 
-`MyObject`'s attributes `my_service` and `my_config` are set with the constant `INJECTED` to indicate that they must be injected.
+`MyObject` attributes `my_service` and `my_config` are set with the constant `INJECTED` to indicate that they must be injected.
 
 The function named `do`, or any other name you choose, will contain the code inside the injection context with access to any required dependency. This function is decorated with `@inject` which will inject the dependencies into the function parameters. `@inject` takes as arguments one or more dependency sources. In this case, a `Definition` for the static config values and an `Autowiring` to automatically instantiate the required objects. `wirinj` will use this ordered list of sources to locate any required dependency.
 
-For the first parameter in function `do`, `my_service`:`MyService`, as it is not defined in the first source (`config`), it will be requested to the second one (`Autowiring`) which will instantiate a `MyService` object as inferred from the parameter type annotation. By default `Autowiring` will make the object a singleton and therefore any subsequent request for this class will get the same unique instance. 
+As the first parameter in the function `do` (`my_service`) is not defined in the first source (`config`), the dependency will be requested to the second one (`Autowiring`) which will lazily instantiate a `MyService` object. The class is inferred from the type annotation of the parameter. By default `Autowiring` will make the object a singleton and therefore any subsequent request for this class will get the same unique instance. 
 
-The second parameter, `my_object_factory` is annotated as `Type[MyObject]`. `Type` is part of the standard  [typing](https://docs.python.org/3/library/typing.html#typing.Type) library. It indicates that the parameter is not expected to be an object of class `MyObject` but the class `MyObject` itself or a subclass of it. Therefore you may use `my_object_factory` variable the same way you would use `MyObject` class. In the body of the function `do` this parameter is called to instantiate a new `MyObject`. By calling `my_object_factory` instead of `MyObject` you make `wirinj` to inject all its required dependencies during the instantiation:
+The second parameter (`my_object_factory`) is annotated as `Type[MyObject]`. `Type[]` is part of the standard  [typing](https://docs.python.org/3/library/typing.html#typing.Type) library. It indicates that the parameter is not expected to contain an object of class `MyObject` but the class `MyObject` itself or a subclass of it. Therefore you may use `my_object_factory` variable the same way you would use `MyObject` class. In the body of the function `do`, this parameter is called to instantiate a new `MyObject`. By calling `my_object_factory` instead of `MyObject` you make `wirinj` to inject all its required dependencies during the instantiation:
  ```python
 # This instantiate a MyObject but, as expected, nothing is injected.
 obj = MyObject(10)
@@ -134,7 +134,7 @@ Injection types
 
 #### Into attributes
 
-Example ([private_injection.py](examples/private_injection/attribute_injection.py)):
+Example ([attribute_injection.py](examples/injection_types/attribute_injection.py)):
 
 ```python
 class Cat:
@@ -155,7 +155,7 @@ When you call the factory:
 
 #### Into `__init__` arguments
 
-Example ([init_injection.py](examples/private_injection/init_injection.py)):
+Example ([init_injection.py](examples/injection_types/init_injection.py)):
 
 ```python
 class Cat:
@@ -205,7 +205,7 @@ Note that you pass a class and not an object as an argument.
 
 `Type[Cat]`, as described in the [typing](https://docs.python.org/3/library/typing.html#typing.Type) library docs, represents the class `Cat` or a subclass of it. A parameter annotated with `Type[]` expects to receive a class and not an object. In the body of the function, the parameter can be used the same way as its subscribed class would be used.
 
-Example ([ide_friendly_factory.py](examples/basic/factory.py)):
+Example ([factory.py](examples/basic/factory.py)):
 
 ```python
 from typing import Type
@@ -386,7 +386,7 @@ I call this the `instantiation path`.
 
 You can explicitly specify a `instantiation path` constraint in the definition `dict`.
 
-Example ([creation_path.py](examples/basic/instantiation_path.py)):
+Example ([instantiation_path.py](examples/basic/instantiation_path.py)):
 
 ```python
 class Animal:
@@ -508,7 +508,7 @@ The rest of the arguments don't have to be related at all to the `__init__` argu
 Indeed, you can specify as many dependency arguments as you need to create the object.
 The injection process will inspect the function signature and will provide them.
 
-Example ([custom_dependencies_with_args.py](examples/basic/custom_build_with_args.py)):
+Example ([custom_build_with_args.py](examples/basic/custom_build_with_args.py)):
 
 ```python
 from random import randint
@@ -594,46 +594,57 @@ Autowiring
 ----------
 
 You can add an `Autowiring` instance as a last resort to provide a dependency when it is undefined.
-A dependency type: `Instance`, `Singleton` or `Factory`, will be automatically chosen by heuristic rules.
+The automatically created dependency will be of type `Instance`, `Singleton` or `Factory` dependening on the context.
 
 Example ([autowiring.py](examples/basic/autowiring.py)):
 
 ```python
-    class Cat:
-        pass
+class MyService:
+    def __str__(self):
+        return '<MyService>'
 
-    class Dog:
-        pass
 
-    class Horse:
-        pass
+class MyObject:
+    my_service: MyService = INJECTED
+    my_config: str = INJECTED
+    ...    
+    
+    def __init__(self, param):
+        self.param = param
 
-    defs = {
-        Cat: Instance(),
-    }
 
-    @inject(Definitions(defs), Autowiring())
-    def fn(cat: Cat, dog: Dog, horse_factory: Type[Horse]):
-        print(cat.__class__.__name__)
-        print(dog.__class__.__name__)
-        horse = horse_factory()
-        print(horse.__class__.__name__)
+config = {
+    'my_config': 'some conf',
+}
 
-    fn()
+
+# Use a function to get access to the root dependencies
+@inject(Definitions(config), Autowiring())
+def do(
+        my_service: MyService,
+        my_object_factory: Type[MyObject]
+):
+    print(my_service)
+
+    my_object1 = my_object_factory(10)
+    print(my_object1)
+
+
+# Inject and run it
+do()
 ```
 
 Output:
 
 ```
-Cat
-Dog
-Horse
+<MyService>
+<MyObject> -> my_config: "some conf", param: 10, my_service: <MyService>
 ```
 
-Cat is the only dependency explicitly defined. The 3 others fall back to `Autowiring` which automatically create:
-- A `Dog` singleton.
-- A `Type[Horse]` factory.
-- A `Horse` instance.
+`my_config` is the only dependency explicitly defined. The 3 others fall back to `Autowiring` which will automatically create:
+- A `MyService` singleton.
+- A `Type[MyObject]` factory.
+- A `MyObject` instance when the factory is called.
 
 ### Heuristic rules
 
