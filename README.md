@@ -101,7 +101,7 @@ Output:
 my_service = <MyService>
 my_object1 = <MyObject> -> my_config: "some conf", param: 10, my_service: <MyService>
 ```
-#### Explanation of the example above
+### Explanation of the example above
 `MyService` and `MyObject` are the two user classes.
 
 `MyObject` attributes `my_service` and `my_config` are set with the constant `INJECTED` to indicate that they must be injected.
@@ -132,7 +132,7 @@ If you are using an [IDE](https://en.wikipedia.org/wiki/Integrated_development_e
 Injection types
 ---------------
 
-#### Into attributes
+### Into attributes
 
 Example ([attribute_injection.py](examples/injection_types/attribute_injection.py)):
 
@@ -153,7 +153,7 @@ When you call the factory:
  0. The `__init__` method is called.
 
 
-#### Into `__init__` arguments
+### Into `__init__` arguments
 
 Example ([init_injection.py](examples/injection_types/init_injection.py)):
 
