@@ -5,7 +5,7 @@ from wirinj import INJECTED, inject, Autowiring, Definitions
 
 class MyService:
     def __str__(self):
-        return f'<MyService>'
+        return '<MyService>'
 
 
 class MyObject:
@@ -25,8 +25,7 @@ config = {
 }
 
 
-# The decorator will inject a dependency into each function parameter
-# based on its name and/or annotation type
+# Use a function to get access to the root dependencies
 @inject(Definitions(config), Autowiring())
 def do(
         my_service: MyService,
