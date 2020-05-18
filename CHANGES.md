@@ -12,4 +12,8 @@
 
 0.7.2
 -----
-- Bug: Wrong detection of `INJECTED` attributes.
+- Bug fixed: Wrong detection of `INJECTED` attributes.
+
+0.7.3
+-----
+- Changes in `injector` unit test.
