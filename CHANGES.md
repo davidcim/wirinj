@@ -9,3 +9,7 @@
 - Full refactoring. I have removed the support for Python `3.5`. Now injection preferred method is through class attributes.
 
 - Documentation rewritten.
+
+0.7.2
+-----
+- Bug: Wrong detection of `INJECTED` attributes.

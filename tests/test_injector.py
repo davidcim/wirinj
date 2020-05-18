@@ -12,6 +12,7 @@ class Reality(object):
 class Thing:
 
     reality: Reality = INJECTED
+    not_injected = 'ABC'
 
     def __init__(self, param):
         self.param = param
@@ -27,3 +28,4 @@ class TestInjector(TestCase):
         self.assertIsInstance(thing, Thing)
         self.assertEqual(thing.param, 'my-param')
         self.assertIsInstance(thing.reality, Reality)
+        self.assertEqual(thing.not_injected, 'ABC')

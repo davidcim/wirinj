@@ -33,7 +33,7 @@ class FunctionArgs:
         self.kwargs = kwargs
 
 
-INJECTED = TypeVar('Injected')
+INJECTED = TypeVar('INJECTED')
 
 
 InjectionClauses = [INJECTED]

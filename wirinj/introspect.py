@@ -3,7 +3,7 @@ from inspect import getfullargspec, signature, Signature, Parameter, _empty
 from typing import Sequence, Callable, Optional, get_type_hints
 
 from .core import Arg, NotSet, DEPS_METHOD, FunctionArgs, NotSetType, DEPENDENCIES_ARG, \
-    QUERY_WRAPPED_METHOD, InjectionClauses
+    QUERY_WRAPPED_METHOD, InjectionClauses, INJECTED
 
 
 def is_builtin_cls(annotation) -> [NotSetType, bool]:
@@ -106,9 +106,12 @@ def get_attribute_deps(cls) -> Sequence[Arg]:
         return []
 
     result = []
-    for field_name, field_class in get_type_hints(cls).items():
-        if getattr(cls, field_name) in InjectionClauses:
-            result.append(Arg(field_name, field_class, NotSet))
+
+    hints = get_type_hints(cls)
+    for att in (dir(cls)):
+        if att[:2] != '__' and getattr(cls, att, None) == INJECTED:
+            result.append(Arg(att, hints.get(att, NotSet), NotSet))
+
     return result
 
 def get_class_dependencies(cls) -> Sequence[Arg]:
