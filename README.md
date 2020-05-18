@@ -104,7 +104,7 @@ my_object1 = <MyObject> -> my_config: "some conf", param: 10, my_service: <MySer
 ### Explanation of the example above
 `MyService` and `MyObject` are the two user classes.
 
-`MyObject` attributes `my_service` and `my_config` are set with the constant `INJECTED` to indicate that they must be injected.
+Attributes `my_service` and `my_config` are set with the constant `INJECTED` to indicate that they must be injected.
 
 The function named `do`, or any other name you choose, will contain the code inside the injection context with access to any required dependency. This function is decorated with `@inject` which will inject the dependencies into the function parameters. `@inject` takes as arguments one or more dependency sources. In this case, a `Definition` for the static config values and an `Autowiring` to automatically instantiate the required objects. `wirinj` will use this ordered list of sources to locate any required dependency.
 
