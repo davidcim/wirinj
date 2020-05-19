@@ -40,8 +40,8 @@ Table of Contents
      * [Definition format](#definition-format)
      * [dict keys](#dict-keys)
      * [dict values](#dict-values)
-     * [Custom dependency builders](#custom-dependency-builders)
-     * [Configuring injection for specific classes](#configuring-injection-for-specific-classes)
+     * [When to specify the class](#when-to-specify-the-class)
+     * [Creation-context-dependent definition](#creation-context-dependent-definition)
      * [Custom-built dependencies](#custom-built-dependencies)
      * [Custom-built dependencies with arguments](#custom-built-dependencies-with-arguments)
      * [Split definitions](#split-definitions)
@@ -324,9 +324,9 @@ def fn(house: House, cat_factory: Type[Cat], dog_factory: Type[Dog]):
 fn()
 ```
 
-### Custom dependency builders 
+### When to specify the class 
 
-`Instance`, `Singleton` and `Factory` accept an optional class argument to indicate the class of the object to be created.
+`Instance`, `Singleton` and `Factory` accept an optional class argument to indicate the class of the object being created.
 There are two use cases where you need to pass the class:
 - The _key_ is a `string` and therefore the dependency class is undefined.
 - The attribute or argument being injected is annotated with a _base class_ but you want to provide a specific _subclass_ of it.
@@ -361,7 +361,7 @@ cat is a Cat
 pet is a Dog
 ```
 
-### Configuring injection for specific classes 
+### Creation-context-dependent definition 
 
 ```python
 class Nail:
