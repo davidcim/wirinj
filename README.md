@@ -877,7 +877,7 @@ However, there is a task planned in the [TO-DO](TODO.md) list to log the `depend
 This silly example aims to illustrate several aspects of the `wirinj` library.
 
 The two main classes, `Bob` and `Mike`, extend `PetDeliveryPerson`.
-They are used to deliver pets to the client using one or more vehicles.
+They deliver pets to the client using one or more vehicles.
 Whenever a `Vehicle` is needed, it is built in advance.
 
 While `Bob` uses his only vehicle by repeating the route several times, `Mike` builds a fleet of autonomous vehicles to deliver all the pets in one trip.
