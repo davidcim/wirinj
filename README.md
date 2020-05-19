@@ -150,8 +150,8 @@ def fn(factory: Type[Cat]):
 
 When you call the factory:
 
- 0. The attributes set to `INJECTED` are located and injected.
- 0. The `__init__` method is called.
+ 1. The attributes set to `INJECTED` are located and injected.
+ 1. The `__init__` method is called.
 
 
 ### Into `__init__` arguments
