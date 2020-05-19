@@ -178,6 +178,8 @@ Factories
 ---------
 I have already explained in the [first example](#how-to-use-it) of this README how factories are used. Now, I'm going to elaborate on that a little more.
 
+You can think of a Python class as an object factory because if you call it as a function, you get a new instance of the object. `Wirinj` allows you to inject classes so that they can be used as factories. Unlike the original class, the injected version will also inject dependencies into the newly created objects.
+
 Pay attention to the function `func` and its argument `cat_class` in this example:
 
 ```python
