@@ -9,7 +9,7 @@ Why choose wirinj
 - Injection via `__init__` or via _attributes_.
 - Dependencies automatically detected through [reflection](https://en.wikipedia.org/wiki/Reflection_(computer_programming)#Python).
 - No naming conventions required.
-- [No factories needed](#factories) to create new instances.
+- Zero code [factories](#factories).
 - Friendly with [IDE](https://en.wikipedia.org/wiki/Integrated_development_environment) 's [code completion](https://www.jetbrains.com/help/pycharm/auto-completing-code.html#) (e.g. with [PyCharm](https://www.jetbrains.com/pycharm/)).
 - [Autowiring](#autowiring) option.
 - [Injection reports](#injection-reports) to easily debug dependency problems.
@@ -176,7 +176,7 @@ For `__init__` injections, it is not required to set `INJECTED` as a default val
 
 Factories
 ---------
-I have already explained in the [first example](#how-to-use-it) of this README how to use factories. Now, I'm going to elaborate on that a little more.
+I have already explained in the [first example](#how-to-use-it) of this README how factories are used. Now, I'm going to elaborate on that a little more.
 
 Pay attention to the function `func` and its argument `cat_class` in this example:
 
@@ -222,7 +222,7 @@ def fn(cat_factory: Type[Cat]):
 
 fn()
 ```
-By using the `Type[]` annotation, the IDE recognizes the parameter as it was the original class but with the difference that any newly created object will be automatically injected.
+By using the `Type[]` annotation, the IDE recognizes the parameter as if it was the original class but with the difference that any newly created object will be automatically injected.
 
  ```python
 # This instantiate a Cat object but, as expected, nothing is injected.
