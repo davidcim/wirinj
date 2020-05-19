@@ -497,14 +497,14 @@ so all of its `__init__` arguments are injected from dependencies.
 If your constructor requires some arguments to be passed (__explicit arguments__) and others to be injected (__injection arguments__),
 I recommend to follow these rules:
 
-0. In the `__init__` method, put the _explicit arguments_ first and then the _injection arguments_.
+1. In the `__init__` method, put the _explicit arguments_ first and then the _injection arguments_.
 This allow you to use positional arguments when you create the object.
 
-0. Set the default value of the _injection arguments_ to `INJECTED`.
+1. Set the default value of the _injection arguments_ to `INJECTED`.
 This way the IDE [code completion](https://www.jetbrains.com/help/pycharm/auto-completing-code.html#) will not complain about missing arguments.
 Also, this is the only way you can have defaults in your _explicit arguments_ when they are followed by _injection arguments_. 
 
-0. About the builder function that you pass to `CustomInstance`, use the same name and position for the _explicit arguments_ as you use in the `__init__` method. 
+1. About the builder function that you pass to `CustomInstance`, use the same name and position for the _explicit arguments_ as you use in the `__init__` method. 
 The rest of the arguments don't have to be related at all to the `__init__` arguments.
 Indeed, you can specify as many dependency arguments as you need to create the object.
 The injection process will inspect the function signature and will provide them.
