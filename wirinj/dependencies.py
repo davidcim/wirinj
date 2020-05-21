@@ -12,6 +12,9 @@ class ValueDependency(Dependency):
     def __init__(self, value):
         self.value = value
 
+    def get_class(self) -> Union[Any, NotSet]:
+        return self.value.__class__
+
     def get_instance(self, instance_args=None, **deps):
         return self.value
 
