@@ -1,9 +1,9 @@
 import sys
-from inspect import getfullargspec, signature, Signature, Parameter, _empty
+from inspect import getfullargspec, signature, Signature, Parameter
 from typing import Sequence, Callable, Optional, get_type_hints
 
-from .core import Arg, NotSet, DEPS_METHOD, FunctionArgs, NotSetType, DEPENDENCIES_ARG, \
-    QUERY_WRAPPED_METHOD, InjectionClauses, INJECTED
+from .core import Arg, NotSet, DEPS_METHOD, FunctionArgs, NotSetType, INJECTION_ARG, \
+    QUERY_WRAPPED_METHOD, InjectionClauses, INJECTED, init_arg_injection, signature_injection
 
 
 def is_builtin_cls(annotation) -> [NotSetType, bool]:
@@ -20,8 +20,8 @@ def get_deps_from_signature(signature: Signature, exclude_first=False) -> Sequen
             continue
         if param.kind in [Parameter.VAR_POSITIONAL, Parameter.VAR_KEYWORD]:
             continue
-        annotation = NotSet if param.annotation is _empty else param.annotation
-        default = NotSet if param.default is _empty else param.default
+        annotation = NotSet if param.annotation is Parameter.empty else param.annotation
+        default = NotSet if param.default is Parameter.empty else param.default
         result.append(Arg(name, annotation, default))
     return result
 
@@ -53,7 +53,10 @@ def get_method_args(cls, method_name) -> Sequence[Arg]:
     return get_deps_from_signature(signature(method), True)
 
 
-def has_init_injection(cls) -> bool:
+def has_init_arg_injection(cls) -> bool:
+    if not init_arg_injection:
+        return False
+
     init_method = getattr(cls, '__init__')
 
     if not init_method:
@@ -62,7 +65,7 @@ def has_init_injection(cls) -> bool:
     spec = getfullargspec(init_method)
 
     try:
-        if spec.kwonlyargs and spec.kwonlyargs.index(DEPENDENCIES_ARG) >= 0:
+        if spec.kwonlyargs and spec.kwonlyargs.index(INJECTION_ARG) >= 0:
             return True
     except ValueError:
         pass
@@ -72,6 +75,9 @@ def has_init_injection(cls) -> bool:
 
 def get_signature_deps(cls) -> Sequence[Arg]:
     args = []
+
+    if not signature_injection:
+        return args
 
     # Base deps
     for base_cls in cls.__bases__:
@@ -91,7 +97,8 @@ def get_init_deps(cls) -> Sequence[Arg]:
     if not init_method:
         return ()
 
-    if has_init_injection(cls):
+    ## Access real __init__ when using injection decorator
+    if has_init_arg_injection(cls):
         real_init = init_method(QUERY_WRAPPED_METHOD)
         return get_deps_from_signature(signature(real_init), True)
 
@@ -120,7 +127,10 @@ def get_class_dependencies(cls) -> Sequence[Arg]:
     args = get_init_deps(cls)
 
     args += get_attribute_deps(cls)
-    args += get_signature_deps(cls)
+
+    if signature_injection:
+        args += get_signature_deps(cls)
+
     return args
 
 
@@ -151,7 +161,9 @@ def subclass_inject(cls, args, kwargs, kwinject):
 def instantiate_class(cls, instance_args: Optional[FunctionArgs] = None, **deps):
 
     priv_args = get_attribute_deps(cls)
-    priv_args += get_signature_deps(cls)
+
+    if signature_injection:
+        priv_args += get_signature_deps(cls)
 
     # Collect priv args
     priv_deps = {}
@@ -176,8 +188,8 @@ def instantiate_class(cls, instance_args: Optional[FunctionArgs] = None, **deps)
 
     # Instance
     if priv_deps:
-        if has_init_injection(cls):
-            return cls(*args, **{DEPENDENCIES_ARG: priv_deps, **pub_deps, **kwargs})
+        if has_init_arg_injection(cls):
+            return cls(*args, **{INJECTION_ARG: priv_deps, **pub_deps, **kwargs})
         else:
             return subclass_inject(cls, args, {**pub_deps, **kwargs}, priv_deps)
     else:

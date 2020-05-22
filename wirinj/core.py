@@ -10,12 +10,20 @@ logger = getLogger(wirinj.__name__)
 SEPARATOR_OPEN = '--------------- ' + wirinj.__name__ + ' ---------------'
 SEPARATOR_CLOSE = '--------------------------------------'
 
+signature_injection = False
 DEPS_METHOD = '__deps__'
-DEPENDENCIES_ARG = '_dependencies'
+
+init_arg_injection = False
+INJECTION_ARG = '_dependencies'
 
 QUERY_WRAPPED_METHOD = '_query_wrapped_method'
 
-USE_SUBCLASSING_FACTORY = True
+
+class FactoryStrategy:
+    SUBCLASS = 1
+    FUNCTION = 2
+
+factory_strategy = FactoryStrategy.SUBCLASS
 
 
 class NotSetType(type):
