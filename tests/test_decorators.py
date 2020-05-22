@@ -1,14 +1,13 @@
 import logging
 from io import StringIO
 from typing import Type
-
 from unittest import TestCase
 
-from wirinj.decorators import inject, deps
-from wirinj import Autowiring, Definitions
-
-from examples.pet_delivery.classes import Mike, Engine, Pet
+from examples.pet_delivery.classes import Mike
 from examples.pet_delivery.defs import world_one
+from wirinj import Autowiring, Definitions
+from wirinj.core import signature_injection, init_arg_injection, INJECTED
+from wirinj.decorators import inject, deps
 
 
 class Reality:
@@ -17,17 +16,15 @@ class Reality:
 
 class Thing:
 
-    def __deps__(self, reality: Reality):
-        pass
+    reality: Reality = INJECTED
 
-    @deps
     def __init__(self, param):
         self.param = param
 
 
 class Obj:
     def __deps__(self, dependency):
-        #This is never executed. Makes work IDE inspections for "dependency".
+        # This is never executed. Makes work IDE inspections for signature injection.
         self.dependency = dependency
 
     @deps
@@ -37,30 +34,30 @@ class Obj:
 
 class TestDeps(TestCase):
 
-    def test_dependencies_argument(self):
+    def test_arg_init_injection(self):
         obj = Obj(10, _dependencies={'dependency': 20})
         self.assertEqual(obj.dependency, 20)
         self.assertEqual(obj.param, 10)
 
     def test_factory_with_arguments(self):
-
         @inject(Autowiring())
         def fn(factory: Type[Thing]):
             thing = factory(10)
             self.assertIsInstance(thing, Thing)
             self.assertIsInstance(thing.reality, Reality)
+
         fn()
 
-    def test_mixed_priv_and_public_args(self):
-
+    def test_init_dependency(self):
         @inject(Definitions({'param': 10}), Autowiring())
         def fn(thing: Thing):
             self.assertIsInstance(thing, Thing)
             self.assertIsInstance(thing.reality, Reality)
             self.assertIs(thing.param, 10)
+
         fn()
 
-    def test_deps_on_class_and_subclass(self):
+    def test_injection_on_class_and_subclass(self):
         class Qux:
             pass
 
@@ -68,22 +65,11 @@ class TestDeps(TestCase):
             pass
 
         class Bar:
-
-            def __deps__(self, foo: Foo, foo2: Foo, **_):
-                pass
-
-            @deps
-            def __init__(self):
-                pass
+            foo: Foo = INJECTED
+            foo2: Foo = INJECTED
 
         class Baz(Bar):
-
-            def __deps__(self, qux: Qux, **_):
-                pass
-
-            @deps
-            def __init__(self):
-                super().__init__()
+            qux: Qux = INJECTED
 
         @inject(Autowiring())
         def do(baz: Baz):
@@ -91,8 +77,8 @@ class TestDeps(TestCase):
             self.assertIsInstance(baz.foo2, Foo)
             self.assertIsInstance(baz.qux, Qux)
             self.assertIs(baz.foo, baz.foo2)
-        do()
 
+        do()
 
 
 class TestInject(TestCase):
