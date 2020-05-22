@@ -1,6 +1,6 @@
 from typing import Union, Any, Optional, Sequence, Type, Callable
 
-from .core import Dependency, NotSet, Arg, FunctionArgs, USE_SUBCLASSING_FACTORY
+from .core import Dependency, NotSet, Arg, FunctionArgs, factory_strategy, FactoryStrategy
 from .injector import Injector
 from .introspect import get_class_dependencies, instantiate_class, \
     get_func_args, get_func_result
@@ -69,7 +69,7 @@ class FactoryDependency(Dependency):
         return []
 
     def get_instance(self, instance_args=None, **deps):
-        if USE_SUBCLASSING_FACTORY:
+        if factory_strategy == FactoryStrategy.SUBCLASS:
             factory = get_subclassing_factory(self.cls, self.injector.get)
         else:
             factory = get_func_factory(self.cls, self.injector.get)
