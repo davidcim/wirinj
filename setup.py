@@ -15,7 +15,7 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/davidcim/wirinj",
-    packages=setuptools.find_packages(),
+    packages=setuptools.find_packages(exclude=('build*',)),
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
